@@ -1,11 +1,13 @@
 import re
 import datetime
+import copy
 from collections import UserDict
 
 
 class Field:
     def __init__(self, value):
         self.__value = value
+        self.value = value
 
     @property
     def value(self):
@@ -22,16 +24,13 @@ class Field:
     def __repr__(self):
         return self.__value
 
+
 class Name(Field):
 
-    def __init__(self, value):
-        self.value = value
+    pass
 
 
 class Phone(Field):
-
-    def __init__(self, value):
-        self.value = value
 
     @property
     def value(self):
@@ -47,7 +46,7 @@ class Phone(Field):
         # просто из строки удалить  все не цифры
         # если количество цифр меньше шести телефон не записывается
         new_value = re.sub(r'[^\d]', '', value)
-        if len(new_value) > 6:
+        if len(new_value) > 3:
             self.__value = new_value
 
         else:
@@ -55,12 +54,8 @@ class Phone(Field):
             raise Exception(
                 'телефон при вводе может содержать от 3 до 20 цифр и символы: пробел +-()xX.[]_')
 
-            
 
 class Birthday(Field):
-
-    def __init__(self, value):
-        self.value = value
 
     @property
     def value(self):
@@ -74,19 +69,20 @@ class Birthday(Field):
 
         # если передали None , или там не три числа
         # значит создаем объект с value = None
-        
+
         # надо продумать вариант когда передали только число и месяц без года
         #  как сохранить эту дату. Возможно в 0004 году
-        
+
         if len(numbers_date) != 3:
             self.__value = None
+            return
 
         # преобразую в кортеж чисел
 
         # не продумано в каком порядке получаю числа
         # (год, месяц, число) или (число, месяц, год)
         # сейчас написано только для (год, месяц, число)
-        numbers_date = tuple(map(int, numbers_date))
+        numbers_date = list(map(int, numbers_date))[::-1]
 
         try:
             # если из этих чисел получается дата
@@ -102,31 +98,34 @@ class Birthday(Field):
                 self.__value = None
                 raise Exception(
                     f'Hey, baby! You are too young) Check if you have entered correct birthday date.')
-``
             # присваиваем новое значение даты
             self.__value = date_birthday
 
-        except TypeError:
+        except:
             self.__value = None
-            raise Exception("Incorrect birthday format, expected day-month-year")
+            raise Exception(
+                "Incorrect birthday format, expected day-month-year")
 
     def __repr__(self):
         return self.value.strftime('%d-%m-%Y')
 
     @property
-    def days_to_birthday(self, start_date = None, ):
+    def days_to_birthday(self, start_date=None, ):
         #  если дата в record  не указана метод возвращает -1
-        if not self : return -1
+        if not self:
+            return -1
 
-        if start_date  < self < end_date
+        # if start_date < self < end_date
+
 
 class Record():
 
-    def __init__(self, name, phone='', birthday=Birthday(None)):
+    def __init__(self, name,  birthday=None):
         self.name = name
-        self.phones = [phone]
+        self.phones = []
+        birthday = Birthday(birthday)
         self.birthday = birthday
-    
+
     def add_phone(self, phone):
         self.phones.append(phone)
 
@@ -152,19 +151,19 @@ class Record():
         # просматривает текстовые поля записи (name, phone). Если встречает \
         # сответствие паттерну - возвращает экземпляр записи. Иначе возвращает\
         # False
-        if pattern.casefold() in self.name.casefold(): # 'self.name.casefold() это работает? разве не self.name.value.casefold()
+        # 'self.name.casefold() это работает? разве не self.name.value.casefold()
+        if pattern.casefold() in self.name.casefold():
             return self
-        #for phone in self.phones:
+        # for phone in self.phones:
         #    if pattern.casefold() in phone.value:
         #        return self
-        
+
         # должно сработать, так как переопределен метод __eq__
-        if pattern in self.phones :
+        if pattern in self.phones:
             return self
         return False
 
-
-    def search_birthday(self, start_date = None, end_date = None, year: bool = False):
+    def search_birthday(self, start_date=None, end_date=None, year: bool = False):
         '''
         на вход метод может получить две даты (type datetime.datetime) 
         и флаг year, указывающий учитывать год указанный в датах или нет
@@ -183,18 +182,18 @@ class Record():
 
         delta_date = (end_date - start_date).days
 
-        # Если year=False - то при сравнении год не 
+        # Если year=False - то при сравнении год не
         # учитывается, иначе год участвует в сравнении
         if not year:
 
-            # если year=False то все даты приводятся к текущему году 
-            #(сравниваются только по числу и месяцу )
+            # если year=False то все даты приводятся к текущему году
+            # (сравниваются только по числу и месяцу )
             start_date = start_date.replace(year=now.year)
             end_date = end_date.replace(year=now.year)
-            
+
         # если дата рождения находится в интервале от start_date до end_date
-        # возвращает саму запись self, иначе возвращает False. 
-        if  0 <= self.birthday.days_to_birthday(start_date) <= delta_date:
+        # возвращает саму запись self, иначе возвращает False.
+        if 0 <= self.birthday.days_to_birthday(start_date) <= delta_date:
             return self
 
         # если дата рождения не попадает в интервал - возвращаем False
@@ -210,6 +209,7 @@ class Record():
                 st += f" |                                         |             | {elem.__repr__(): <20} |\n"
         return st
 
+
 class AddressBook(UserDict):
 
     """
@@ -220,13 +220,13 @@ class AddressBook(UserDict):
     Methods defined in the class are:
 
     <add_record(self, record)>, takes contact's  record, 
-    
+
     returns dict with new element.
 
     <iterator(self, n)>, method returns a record generator, 
-    
+
     takes <n> - number of records in <self.data> that will be returned in 
-    
+
     one generator call
 
     <search_contacts(self, user_input)>, method searches contact's data by the given from a user partial info
@@ -237,6 +237,7 @@ class AddressBook(UserDict):
     # два следующих метода  - инструкции для сериализации
     # и десериализации  экземпляра класса  AddressBook
     # ----------------------------------
+
     def __getstate__(self):
         # deepcopy  для перестраховки.
         atr = copy.deepcopy(self.__dict__)
@@ -249,15 +250,13 @@ class AddressBook(UserDict):
     def add_record(self, record: Record):
         # добавляет новую запись в существующую адресную книгу.
 
-
         # метод на входе не пропустит аргумент не классса Record
         # но при этом программа вернет ошибку
         # нужно ли нам это? как перехватить эту ошибку ?
         # или проще написать свой тест :
-        #if not isinstance(record, Record):
+        # if not isinstance(record, Record):
         #    raise Exception(
         #        'В метод передан не объект класса Record')
-
 
         # Если запись с таким ключем (именем) уже существует - генерирует исключение
         if record.name in self:
@@ -265,7 +264,7 @@ class AddressBook(UserDict):
                 'Запись с таким именем уже существует в адресной книге')
         # ? self[record.name] = record
         self[record.name.value] = record
-    
+
     def del_record(self, name: str):
         # удаляет запись с ключем name (строка)
         # из существующей адресной книги. Если такого имени нет - генерирует исключение
@@ -277,7 +276,7 @@ class AddressBook(UserDict):
     def search(self, user_input):
         # возвращает объект класса AdressBook, содержащий
         # все записи, которые при проверке методом Record.search вернут значение
-        result = AdressBook()
+        result = AddressBook()
 
         for record in self.values():
             res_rec = record.search(user_input)
@@ -290,7 +289,7 @@ class AddressBook(UserDict):
         # день рождения попадает в интервал дат data_start и data_stop. \
         # Для всех аргументов действуют те же правила, что и для метода \
         # Birthday.search_bithday()
-        result = AdressBook()
+        result = AddressBook()
         for record in self.values():
             res_rec = record.search_birthday(data_start, data_stop, year)
             if res_rec:
@@ -313,12 +312,12 @@ class AddressBook(UserDict):
         # общее кличество записей, которые должны быть выведены
         len_key_list = len(key_list)
         while self.k < len_key_list:
-            result = AdressBook()
+            result = AddressBook()
             # определяем сколько записей можно вывести на текущем шаге (на последнем шаге
             # выводим меньше чем n)
-            #max_iter = key_list_max if len(
+            # max_iter = key_list_max if len(
             #    key_list[self.k:]) < self.n else self.k + self.n
-            
+
             max_iter = min(len_key_list, self.k + self.n)
 
             for i in range(self.k, max_iter):

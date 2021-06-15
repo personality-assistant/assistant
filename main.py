@@ -3,25 +3,26 @@ import sys
 import os.path
 from pathlib import Path
 from faker import Faker
-from classes_hw12 import AddressBook, Record, Name, Phone, Birthday
+from classes import AddressBook, Record, Name, Phone, Birthday
 
 CONTACTS_FILE = 'contacts.dat'
 CONTACTS_DIR = ''
+
 
 def deserialize_users(path):
     """using the path "path" reads the file with contacts"""
 
     with open(path, "rb") as fh:
-        adressbook = pickle.load(fh)
+        addressbook = pickle.load(fh)
 
-    return adressbook
+    return addressbook
 
 
-def serialize_users(adressbook, path):
+def serialize_users(addressbook, path):
     """saves a file with contacts on the path (object pathlib.Path) to disk"""
 
     with open(path, "wb") as fh:
-        pickle.dump(adressbook, fh)
+        pickle.dump(addressbook, fh)
 
 
 def error_handler(func):
@@ -97,7 +98,7 @@ def parse(input_string):  # --> ('key word', parameter)
 
 
 @error_handler
-def get_handler(res_pars, adressbook):
+def get_handler(res_pars, addressbook):
     # получив результаты работы парсера функция управляет передачей параметров
     # и вызовом соответствующего обработчика команды
 
@@ -112,15 +113,15 @@ def get_handler(res_pars, adressbook):
         - bd add - формат: bd add name dd-mm-YYYY - ввод либо перезапись ранее введенной даты рождения. Соблюдайте формат ввода даты.
         - search - формат: search pattern - поиск совпадений по полям имени и телефонов. Будут выведены все записи в которых есть совпадения'''
 
-    def add_f(name, phone, adressbook):
+    def add_f(name, phone, addressbook):
 
-        record = Record(name)
+        record = Record(Name(name))
         record.add_phone(Phone(phone))
         birthday_str = input(
             'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
         if birthday_str:
             record.add_birthday(Birthday(birthday_str))
-        adressbook.add_record(record)
+        addressbook.add_record(record)
 
         return f'в адресную книгу внесена запись: \n{record}'
 
@@ -138,24 +139,24 @@ def get_handler(res_pars, adressbook):
     #            old number: {old_phone}
     #            new number: {phone}'''
 
-    def phone_f(user_input, phone, adressbook):
+    def phone_f(user_input, phone, addressbook):
         # осуществляет поиск по паттерну во всех текстовых полях адресной книги
-        result = adressbook.search(user_input)
+        result = addressbook.search(user_input)
 
         if not result:
             raise Exception('По данному запросу ничего не найдено')
 
         return result
 
-    def show_all_f(N, phone, adressbook):
+    def show_all_f(N, phone, addressbook):
         # выводит на экран всю адресную книгу блоками по N записей. Основная обработка
         # реализована как метод класса AdressBook, что позволяет использовать аналогичный
         # вывод для результатов поиска по запросам, так как функции поиска возвращают
         # объект типа AdressBook с результатами
         n = int(N) if N else 10
         # здесь должен другой вывод, который будет реализован другой функцией (Ярослав)
-        print(f'всего к выводу {len(adressbook)} записей: ')
-        for block in adressbook.iterator(n):
+        print(f'всего к выводу {len(addressbook)} записей: ')
+        for block in addressbook.iterator(n):
             print(block)
             print('---------------------------------------------------------------------------------------------------')
             input('для продолжения вывода нажмите "ввод"')
@@ -167,22 +168,22 @@ def get_handler(res_pars, adressbook):
     def unrecognize_f(name, phone, contacts):
         return 'ввод не распознан. Для получения помощи введите "help"'
 
-    def add_phone(name, phone, adressbook):
+    def add_phone(name, phone, addressbook):
         # позволяет добавить в запись дополнительный телефон
-        if name in adressbook:
-            adressbook[name].add_phone(Phone(phone))
+        if name in addressbook:
+            addressbook[name].add_phone(Phone(phone))
         else:
             return f'имени {name} нет в адресной книге'
-        return f'в запись добавлен новый телефон: \n {adressbook[name]}'
+        return f'в запись добавлен новый телефон: \n {addressbook[name]}'
 
-    def bd_add_f(name, birthday_str, adressbook):
-        # позволяет добавить (перезаписать, если ранее было введена) 
+    def bd_add_f(name, birthday_str, addressbook):
+        # позволяет добавить (перезаписать, если ранее было введена)
         # дату рождения в запись
-        if name in adressbook:
-            adressbook[name].add_birthday(Birthday(birthday_str))
+        if name in addressbook:
+            addressbook[name].add_birthday(Birthday(birthday_str))
         else:
             return f'имени {name} нет в адресной книге'
-        return f'в запись добавлена дата рождения: \n {adressbook[name]}'
+        return f'в запись добавлена дата рождения: \n {addressbook[name]}'
 
     HANDLING = {
         'hello': hello_f,
@@ -200,7 +201,7 @@ def get_handler(res_pars, adressbook):
         'other phone': add_phone,
         'bd add': bd_add_f
     }
-    return HANDLING[res_pars[0]](res_pars[1], res_pars[2], adressbook)
+    return HANDLING[res_pars[0]](res_pars[1], res_pars[2], addressbook)
 
 
 def main():
@@ -209,22 +210,22 @@ def main():
         path = CONTACTS_DIR
         name = CONTACTS_FILE
         path_file = Path(path) / name
-        adressbook = deserialize_users(
-            path_file) if Path.exists(path_file) else AdressBook()
+        addressbook = deserialize_users(
+            path_file) if Path.exists(path_file) else AddressBook()
 
     else:
         path = sys.argv[1]
         name = CONTACTS_FILE
         path_file = Path(path) / name
-        adressbook = deserialize_users(path_file)
+        addressbook = deserialize_users(path_file)
 
     while True:
         # adressbook.add_fake_records(40)
         input_string = input('>>>  ')
         res_pars = parse(input_string)
-        result = get_handler(res_pars, adressbook)
+        result = get_handler(res_pars, addressbook)
         if not result:
-            serialize_users(adressbook, path_file)
+            serialize_users(addressbook, path_file)
             print('Good bye!')
             break
         print(result)
