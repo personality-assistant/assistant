@@ -270,6 +270,17 @@ class AddressBook(UserDict):
 
     def add_record(self, record: Record):
         # добавляет новую запись в существующую адресную книгу.
+
+
+        # метод на входе не пропустит аргумент не классса Record
+        # но при этом программа вернет ошибку
+        # нужно ли нам это? как перехватить эту ошибку ?
+        # или проще написать свой тест :
+        #if not isinstance(record, Record):
+        #    raise Exception(
+        #        'В метод передан не объект класса Record')
+
+
         # Если запись с таким ключем (именем) уже существует - генерирует исключение
         if record.name in self:
             raise Exception(
@@ -285,17 +296,30 @@ class AddressBook(UserDict):
         else:
             raise Exception('записи с таким именем нет в адресной книге')
 
-    def search(self, pattern):
+    def search(self, user_input):
         # возвращает объект класса AdressBook, содержащий
         # все записи, которые при проверке методом Record.search вернут значение
         result = AdressBook()
+
         for record in self.values():
-            res_rec = record.search(pattern)
+            res_rec = record.search(user_input)
             if res_rec:
                 result.add_record(res_rec)
         return result
 
-    def out_iterator(self, n):
+    def search_birthday(self, data_start, data_stop=False, year: bool = False):
+        # возвращает объект класса AdressBook, содержащий записи, для которых \
+        # день рождения попадает в интервал дат data_start и data_stop. \
+        # Для всех аргументов действуют те же правила, что и для метода \
+        # Birthday.search_bithday()
+        result = AdressBook()
+        for record in self.values():
+            res_rec = record.search_birthday(data_start, data_stop, year)
+            if res_rec:
+                result.add_record(res_rec)
+        return result
+
+    def iterator(self, n):
         '''
         метод возвращает на каждой итерации объект класса AdressBook, 
         содержащий n записей из вызывающего метод объекта AdressBook,
@@ -324,4 +348,31 @@ class AddressBook(UserDict):
                 self.k += 1
             yield result
 
+    def __repr__(self) -> str:
+        #  это метод проверить Ярославу
+        # правильно ли он работает в связке с record.__repr__
+        res = ''
+        for elem in self.values():
+            res += elem.__repr__()
+        return res
 
+    def add_fake_records(self, n):
+        '''
+        рабочий метод, для отладки и демонстрации
+        заполняет словарь фейковыми данными
+        '''
+        fake = Faker(['uk_UA', 'ru_RU'])
+        for i in range(n):
+            name = fake.name()
+            phone = fake.phone_number()
+            date_of_birth = fake.date_of_birth(
+                minimum_age=10, maximum_age=115).strftime('%d-%m-%Y')
+            record = Record(name, date_of_birth).add_phone(phone)
+            self.add_record(record)
+            print(f'Добавлена запись: {name}  {date_of_birth}  {phone}')
+            print(
+                f'вид в record: {record.name}  {record.birthday.birthday:%d-%m-%Y}  {record.phones[0].phone}')
+
+
+if __name__ == '__main__':
+    pass
