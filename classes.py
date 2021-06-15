@@ -55,7 +55,6 @@ class Phone(Field):
 
             
 
-
 class Birthday(Field):
 
     def __init__(self, value):
@@ -113,39 +112,11 @@ class Birthday(Field):
         return self.value.strftime('%d-%m-%Y')
 
     @property
-    def days_to_birthday(self, start_date = None):
+    def days_to_birthday(self, start_date = None, ):
         #  если дата в record  не указана метод возвращает -1
         if not self : return -1
-        now = datetime.datetime.today().date()
-        start_date = start_date or now
 
-        # отдельный случай  - день рождения 29 февраля
-        # чтобы избежать столкновения с 29/2  будем  брать в расчет
-        # день на день позже дня рождения.
-        # после всех вычислений мы  отнимем один день
-        if (self.value.day, self.value.month) == (29, 2):
-            bd = self.value + datetime.timedelta(days=1)
-        else:
-            bd = self.value
-
-        # получаю дату дня  рождения в этому году
-        bd_that_year = bd.replace(year=start_date.year)
-
-        # дельта от дня рождения до сегодня
-        delta = bd_that_year - start_date
-
-        # если она отрицательна, то значит др в этом году уже прошел
-        if delta.days <= 0:
-
-            # надо брать дату дня рождения следующего года
-            bd_that_year = bd_that_year.replace(year=start_date.year+1)
-
-            # дельта от дня рождения в следующем году до сегодня
-            delta = bd_that_year - start_date
-
-        if (self.value.day, self.value.month) == (29, 2):
-            return delta.days - 1
-        return delta.days
+        if start_date  < self < end_date
 
 class Record():
 
@@ -208,7 +179,7 @@ class Record():
         start_date = start_date or now
         end_date = end_date or now + datetime.timedelta(days=7)
 
-        delta_date = end_date - start_date
+        delta_date = (end_date - start_date).days
 
         # Если year=False - то при сравнении год не 
         # учитывается, иначе год участвует в сравнении
@@ -221,7 +192,7 @@ class Record():
             
         # если дата рождения находится в интервале от start_date до end_date
         # возвращает саму запись self, иначе возвращает False. 
-        if  0 <= self.birthday.days_to_birthday(start_date, end_date) <= delta_date:
+        if  0 <= self.birthday.days_to_birthday(start_date) <= delta_date:
             return self
 
         # если дата рождения не попадает в интервал - возвращаем False
