@@ -49,8 +49,6 @@ Record
 
 	search_birthday
 
-	search_nearest__birthday
-
 AddressBook(UserDict)
 	__getstate__
 

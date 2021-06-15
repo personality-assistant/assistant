@@ -113,8 +113,11 @@ class Birthday(Field):
         return self.value.strftime('%d-%m-%Y')
 
     @property
-    def days_to_birthday(self):
+    def days_to_birthday(self, start_date = None):
+        #  если дата в record  не указана метод возвращает -1
+        if not self : return -1
         now = datetime.datetime.today().date()
+        start_date = start_date or now
 
         # отдельный случай  - день рождения 29 февраля
         # чтобы избежать столкновения с 29/2  будем  брать в расчет
@@ -126,19 +129,19 @@ class Birthday(Field):
             bd = self.value
 
         # получаю дату дня  рождения в этому году
-        bd_that_year = bd.replace(year=now.year)
+        bd_that_year = bd.replace(year=start_date.year)
 
         # дельта от дня рождения до сегодня
-        delta = bd_that_year - now
+        delta = bd_that_year - start_date
 
         # если она отрицательна, то значит др в этом году уже прошел
         if delta.days <= 0:
 
             # надо брать дату дня рождения следующего года
-            bd_that_year = bd_that_year.replace(year=now.year+1)
+            bd_that_year = bd_that_year.replace(year=start_date.year+1)
 
             # дельта от дня рождения в следующем году до сегодня
-            delta = bd_that_year - now
+            delta = bd_that_year - start_date
 
         if (self.value.day, self.value.month) == (29, 2):
             return delta.days - 1
@@ -187,45 +190,47 @@ class Record():
             return self
         return False
 
-    # нужно написать 
-    def search_nearest_birthday(self, N):
-        #функцию, которая будет искать абонентов, 
-        # дни рождения которых будут в ближайшие N  дней.
-        # удобно использовать метод Birthday.days_to_birthday
-        pass
 
-    def search_birthday(self, data_start, data_stop=False, year: bool = False):
-        # если дата рождения находится в интервале от data до data_stop\
-        # возвращает экзкмпляр записи, иначе возвращает False. Если \
-        # date_stop=False, то сравнение проходит не по интервалу дат, а по\
-        # одной дате date. Если year=False - то при сравнении год не \
+    def search_birthday(self, start_date = None, end_date = None, year: bool = False):
+        '''
+        на вход метод может получить две даты (type datetime.datetime) 
+        и флаг year, указывающий учитывать год указанный в датах или нет
+        все параметры необязательны 
+        если их нет, 
+        то будет считаться 
+        началом диапазона текущая дата
+        концом диапазона + 7 дней
+        год не учитывается
+
+        метод возвращает объект Record  или False
+        '''
+        now = datetime.datetime.today().date()
+        start_date = start_date or now
+        end_date = end_date or now + datetime.timedelta(days=7)
+
+        delta_date = end_date - start_date
+
+        # Если year=False - то при сравнении год не 
         # учитывается, иначе год участвует в сравнении
-        if not self.birthday.value:
-            # если дата рождения не записана - возвращаем None
-            return None
-
-        data_start_local = datetime.strptime(data_start, "%d-%m-%Y")
-        data_stop_local = datetime.strptime(
-            data_stop, "%d-%m-%Y") if data_stop else datetime.strptime(data_start, "%d-%m-%Y") + timedelta(days=1)
-        data_record_local = self.birthday.birthday
-
         if not year:
-            # если year=False то все даты приводятся к текущему году (сравниваются только\
-            # по числу и месяцу )
-            current_year = date.today().year
-            data_start_local = data_start_local.replace(year=current_year)
-            data_stop_local = data_stop_local.replace(year=current_year)
-            data_record_local = data_record_local.replace(year=current_year)
 
-        if data_start_local <= data_record_local < data_stop_local:
+            # если year=False то все даты приводятся к текущему году 
+            #(сравниваются только по числу и месяцу )
+            start_date = start_date.replace(year=now.year)
+            end_date = end_date.replace(year=now.year)
+            
+        # если дата рождения находится в интервале от start_date до end_date
+        # возвращает саму запись self, иначе возвращает False. 
+        if  0 <= self.birthday.days_to_birthday(start_date, end_date) <= delta_date:
             return self
-        # если дата рождения попадает в интервал - возвращаем экземпляр записи, иначе False
+
+        # если дата рождения не попадает в интервал - возвращаем False
         return False
 
     def __repr__(self):
         # форматирует и выводит одну запись в читаемом виде одной или нескольких строк
         # (если запись содержит несколько телефонов)
-        # этот метод надо передалать Ярославу.
+        # этот метод надо переделать Ярославу.
         st = f"| {self.name:.<40}| {self.birthday.__repr__(): <11} | {self.phones[0].__repr__() if self.phones else '': <20} |\n"
         if len(self.phones) > 1:
             for elem in self.phones[1:]:
