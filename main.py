@@ -1,4 +1,4 @@
-from classes import AddressBook, Record, Name, Phone, Birthday
+from classes import AddressBook, Record, Phone, Birthday
 from os import name
 import sys
 import pickle
@@ -114,11 +114,12 @@ def get_handler(res_pars, addressbook):
         - bd add - формат: bd add name dd-mm-YYYY - ввод либо перезапись ранее введенной даты рождения. Соблюдайте формат ввода даты.
         - search - формат: search pattern - поиск совпадений по полям имени и телефонов. Будут выведены все записи в которых есть совпадения'''
 
-    def add_f(name, phone, addressbook):
-
+    def add_f(addressbook):
+        name = pretty_input('Введите имя ')
         record = Record(name)
+        phone = pretty_input('Введите телефон ')
         record.add_phone(phone)
-        birthday_str = input(
+        birthday_str = pretty_input(
             'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
         if birthday_str:
             record.add_birthday(birthday_str)
@@ -140,9 +141,10 @@ def get_handler(res_pars, addressbook):
     #            old number: {old_phone}
     #            new number: {phone}'''
 
-    def phone_f(pattern, phone, addressbook):
-        # осуществляет поиск по паттерну во всех текстовых полях адресной книги
-        result = addressbook.search(pattern)
+    def search(addressbook):
+        user_input = pretty_input('What are you looking for?')
+        # осуществляет поиск введенной строки во всех текстовых полях адресной книги
+        result = addressbook.search(user_input)
 
         if not result:
             raise Exception('По данному запросу ничего не найдено')
@@ -192,15 +194,22 @@ def get_handler(res_pars, addressbook):
         'close': exit_f,
         'add': add_f,
         'show all': show_all_f,
-        'phone': phone_f,
-        'search': phone_f,
+        'phone': search,
+        'search': search,
         # 'change': change_f,
         'unrecognize': unrecognize_f,
         'help': help_f,
         'other phone': add_phone,
         'bd add': bd_add_f
     }
-    return HANDLING[res_pars[0]](res_pars[1], res_pars[2], addressbook)
+    return HANDLING[res_pars](addressbook)
+
+
+def pretty_input(text):
+    # print(chr(3196)*80)
+    user_input = input(text)
+    print(chr(3196)*80)
+    return user_input
 
 
 def main():
@@ -210,7 +219,7 @@ def main():
         name = CONTACTS_FILE
         path_file = Path(path) / name
         addressbook = deserialize_users(
-            path_file) if Path.exists(path_file) else addressbook()
+            path_file) if Path.exists(path_file) else AddressBook()
 
     else:
         path = sys.argv[1]
@@ -221,8 +230,12 @@ def main():
     while True:
         # addressbook.add_fake_records(40)
         input_string = input('>>>  ')
-        res_pars = parse(input_string)
-        result = get_handler(res_pars, addressbook)
+        # убираем разбор строки на слова и поиск команды
+        #res_pars = parse(input_string)
+
+        # сейчас input_string  должен содержать только команду - действие
+
+        result = get_handler(input_string, addressbook)
         if not result:
             serialize_users(addressbook, path_file)
             print('Good bye!')

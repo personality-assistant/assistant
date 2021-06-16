@@ -3,33 +3,20 @@ from datetime import datetime, date, timedelta
 from faker import Faker
 
 
-class Field:
-    def __init__(self, value):
-        self.__value = None
-        self.value = value
+class Phone:
+    # класс для хранения и предварительно обработки номера телефона
 
-    @property
-    def value(self):
-        return self.__value
-
-    @value.setter
-    def value(self, new_value):
-        self.__value = new_value
+    def __init__(self, phone):
+        self.__phone = None
+        self.phone = phone
 
     def __eq__(self, ob) -> bool:
         # два объекта равны если равны строковые значения сохраненных телефонов
-        return self.__value == ob.__value
-
-    def __repr__(self):
-        return self.__value
-
-
-class Name(Field):
-    pass
-
-
-class Phone(Field):
-    # класс для хранения и предварительно обработки номера телефона
+        if isinstance(ob, Phone):
+            return self.phone == ob.phone
+        # можно сравнить строку и объект. Если строка совпадает с полем phone
+        if isinstance(ob, str):
+            return self.phone == ob
 
     @property
     def phone(self):
@@ -41,8 +28,11 @@ class Phone(Field):
         if num.isdigit() and (3 <= len(num) <= 20):
             self.__phone = num
         else:
-            raise Exception(
+            raise ValueError(
                 'телефон при вводе может содержать от 3 до 20 цифр и символы: пробел +-()xX.[]_')
+
+    def __repr__(self):
+        return self.phone
 
 
 class Birthday:
@@ -173,7 +163,7 @@ class AddressBook(UserDict):
         self.n = n
         # счетчик общего количества выведенных записей
         self.k = 0
-        # список из ключей вызывающего метод объекта AdressBook
+        # список из ключей вызывающего метод объекта AddressBook
         key_list = list(self)
         # общее кличество записей, которые должны быть выведены
         key_list_max = len(key_list)
