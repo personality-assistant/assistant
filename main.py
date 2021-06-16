@@ -1,10 +1,11 @@
-import pickle
+from classes import AddressBook, Record, Phone, Birthday
+from os import name
 import sys
-import os.path
+import pickle
 from pathlib import Path
 from faker import Faker
-from classes import AddressBook, Record, Name, Phone, Birthday
 
+# директория может быть выбрана при запуске программы, имя файла - константа.
 CONTACTS_FILE = 'contacts.dat'
 CONTACTS_DIR = ''
 
@@ -100,7 +101,7 @@ def parse(input_string):  # --> ('key word', parameter)
 @error_handler
 def get_handler(res_pars, addressbook):
     # получив результаты работы парсера функция управляет передачей параметров
-    # и вызовом соответствующего обработчика команды
+    # и вызовм соотвествующего обработчика команды
 
     def help_f(*args):
         return '''формат команд:
@@ -113,14 +114,15 @@ def get_handler(res_pars, addressbook):
         - bd add - формат: bd add name dd-mm-YYYY - ввод либо перезапись ранее введенной даты рождения. Соблюдайте формат ввода даты.
         - search - формат: search pattern - поиск совпадений по полям имени и телефонов. Будут выведены все записи в которых есть совпадения'''
 
-    def add_f(name, phone, addressbook):
-
-        record = Record(Name(name))
-        record.add_phone(Phone(phone))
-        birthday_str = input(
+    def add_f(addressbook):
+        name = pretty_input('Введите имя ')
+        record = Record(name)
+        phone = pretty_input('Введите телефон ')
+        record.add_phone(phone)
+        birthday_str = pretty_input(
             'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
         if birthday_str:
-            record.add_birthday(Birthday(birthday_str))
+            record.add_birthday(birthday_str)
         addressbook.add_record(record)
 
         return f'в адресную книгу внесена запись: \n{record}'
@@ -139,8 +141,9 @@ def get_handler(res_pars, addressbook):
     #            old number: {old_phone}
     #            new number: {phone}'''
 
-    def phone_f(user_input, phone, addressbook):
-        # осуществляет поиск по паттерну во всех текстовых полях адресной книги
+    def search(addressbook):
+        user_input = pretty_input('What are you looking for?')
+        # осуществляет поиск введенной строки во всех текстовых полях адресной книги
         result = addressbook.search(user_input)
 
         if not result:
@@ -150,13 +153,12 @@ def get_handler(res_pars, addressbook):
 
     def show_all_f(N, phone, addressbook):
         # выводит на экран всю адресную книгу блоками по N записей. Основная обработка
-        # реализована как метод класса AdressBook, что позволяет использовать аналогичный
+        # реализована как метод класса addressbook, что позволяет использовать аналогичный
         # вывод для результатов поиска по запросам, так как функции поиска возвращают
-        # объект типа AdressBook с результатами
+        # объект типа addressbook с результатами
         n = int(N) if N else 10
-        # здесь должен другой вывод, который будет реализован другой функцией (Ярослав)
         print(f'всего к выводу {len(addressbook)} записей: ')
-        for block in addressbook.iterator(n):
+        for block in addressbook.out_iterator(n):
             print(block)
             print('---------------------------------------------------------------------------------------------------')
             input('для продолжения вывода нажмите "ввод"')
@@ -171,16 +173,15 @@ def get_handler(res_pars, addressbook):
     def add_phone(name, phone, addressbook):
         # позволяет добавить в запись дополнительный телефон
         if name in addressbook:
-            addressbook[name].add_phone(Phone(phone))
+            addressbook[name].add_phone(phone)
         else:
             return f'имени {name} нет в адресной книге'
         return f'в запись добавлен новый телефон: \n {addressbook[name]}'
 
     def bd_add_f(name, birthday_str, addressbook):
-        # позволяет добавить (перезаписать, если ранее было введена)
-        # дату рождения в запись
+        # позволяет добавить (перезаписать, если ранее было введена) дату рождения в запись
         if name in addressbook:
-            addressbook[name].add_birthday(Birthday(birthday_str))
+            addressbook[name].add_birthday(birthday_str)
         else:
             return f'имени {name} нет в адресной книге'
         return f'в запись добавлена дата рождения: \n {addressbook[name]}'
@@ -193,15 +194,22 @@ def get_handler(res_pars, addressbook):
         'close': exit_f,
         'add': add_f,
         'show all': show_all_f,
-        'phone': phone_f,
-        'search': phone_f,
+        'phone': search,
+        'search': search,
         # 'change': change_f,
         'unrecognize': unrecognize_f,
         'help': help_f,
         'other phone': add_phone,
         'bd add': bd_add_f
     }
-    return HANDLING[res_pars[0]](res_pars[1], res_pars[2], addressbook)
+    return HANDLING[res_pars](addressbook)
+
+
+def pretty_input(text):
+    # print(chr(3196)*80)
+    user_input = input(text)
+    print(chr(3196)*80)
+    return user_input
 
 
 def main():
@@ -220,10 +228,14 @@ def main():
         addressbook = deserialize_users(path_file)
 
     while True:
-        # adressbook.add_fake_records(40)
+        # addressbook.add_fake_records(40)
         input_string = input('>>>  ')
-        res_pars = parse(input_string)
-        result = get_handler(res_pars, addressbook)
+        # убираем разбор строки на слова и поиск команды
+        #res_pars = parse(input_string)
+
+        # сейчас input_string  должен содержать только команду - действие
+
+        result = get_handler(input_string, addressbook)
         if not result:
             serialize_users(addressbook, path_file)
             print('Good bye!')
