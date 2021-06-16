@@ -1,10 +1,11 @@
-import pickle
+from classes import AddressBook, Record, Name, Phone, Birthday
+from os import name
 import sys
-import os.path
+import pickle
 from pathlib import Path
 from faker import Faker
-from classes import AddressBook, Record, Name, Phone, Birthday
 
+# директория может быть выбрана при запуске программы, имя файла - константа.
 CONTACTS_FILE = 'contacts.dat'
 CONTACTS_DIR = ''
 
@@ -100,7 +101,7 @@ def parse(input_string):  # --> ('key word', parameter)
 @error_handler
 def get_handler(res_pars, addressbook):
     # получив результаты работы парсера функция управляет передачей параметров
-    # и вызовом соответствующего обработчика команды
+    # и вызовм соотвествующего обработчика команды
 
     def help_f(*args):
         return '''формат команд:
@@ -115,12 +116,12 @@ def get_handler(res_pars, addressbook):
 
     def add_f(name, phone, addressbook):
 
-        record = Record(Name(name))
-        record.add_phone(Phone(phone))
+        record = Record(name)
+        record.add_phone(phone)
         birthday_str = input(
             'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
         if birthday_str:
-            record.add_birthday(Birthday(birthday_str))
+            record.add_birthday(birthday_str)
         addressbook.add_record(record)
 
         return f'в адресную книгу внесена запись: \n{record}'
@@ -139,9 +140,9 @@ def get_handler(res_pars, addressbook):
     #            old number: {old_phone}
     #            new number: {phone}'''
 
-    def phone_f(user_input, phone, addressbook):
+    def phone_f(pattern, phone, addressbook):
         # осуществляет поиск по паттерну во всех текстовых полях адресной книги
-        result = addressbook.search(user_input)
+        result = addressbook.search(pattern)
 
         if not result:
             raise Exception('По данному запросу ничего не найдено')
@@ -150,13 +151,12 @@ def get_handler(res_pars, addressbook):
 
     def show_all_f(N, phone, addressbook):
         # выводит на экран всю адресную книгу блоками по N записей. Основная обработка
-        # реализована как метод класса AdressBook, что позволяет использовать аналогичный
+        # реализована как метод класса addressbook, что позволяет использовать аналогичный
         # вывод для результатов поиска по запросам, так как функции поиска возвращают
-        # объект типа AdressBook с результатами
+        # объект типа addressbook с результатами
         n = int(N) if N else 10
-        # здесь должен другой вывод, который будет реализован другой функцией (Ярослав)
         print(f'всего к выводу {len(addressbook)} записей: ')
-        for block in addressbook.iterator(n):
+        for block in addressbook.out_iterator(n):
             print(block)
             print('---------------------------------------------------------------------------------------------------')
             input('для продолжения вывода нажмите "ввод"')
@@ -171,16 +171,15 @@ def get_handler(res_pars, addressbook):
     def add_phone(name, phone, addressbook):
         # позволяет добавить в запись дополнительный телефон
         if name in addressbook:
-            addressbook[name].add_phone(Phone(phone))
+            addressbook[name].add_phone(phone)
         else:
             return f'имени {name} нет в адресной книге'
         return f'в запись добавлен новый телефон: \n {addressbook[name]}'
 
     def bd_add_f(name, birthday_str, addressbook):
-        # позволяет добавить (перезаписать, если ранее было введена)
-        # дату рождения в запись
+        # позволяет добавить (перезаписать, если ранее было введена) дату рождения в запись
         if name in addressbook:
-            addressbook[name].add_birthday(Birthday(birthday_str))
+            addressbook[name].add_birthday(birthday_str)
         else:
             return f'имени {name} нет в адресной книге'
         return f'в запись добавлена дата рождения: \n {addressbook[name]}'
@@ -211,7 +210,7 @@ def main():
         name = CONTACTS_FILE
         path_file = Path(path) / name
         addressbook = deserialize_users(
-            path_file) if Path.exists(path_file) else AddressBook()
+            path_file) if Path.exists(path_file) else addressbook()
 
     else:
         path = sys.argv[1]
@@ -220,7 +219,7 @@ def main():
         addressbook = deserialize_users(path_file)
 
     while True:
-        # adressbook.add_fake_records(40)
+        # addressbook.add_fake_records(40)
         input_string = input('>>>  ')
         res_pars = parse(input_string)
         result = get_handler(res_pars, addressbook)
