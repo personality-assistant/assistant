@@ -25,11 +25,11 @@ class Phone:
     @phone.setter
     def phone(self, phone):
         num = phone.translate(str.maketrans('', '', '+() -_'))
-        if num.isdigit() and (3 <= len(num) <= 20):
+        if num.isdigit() and (9 <= len(num) <= 12):
             self.__phone = num
         else:
             raise ValueError(
-                'телефон при вводе может содержать от 3 до 20 цифр и символы: пробел +-()xX.[]_')
+                'Телефон при вводе может содержать от 9 до 12 цифр и символы: пробел +-()xX.[]_')
 
     def __repr__(self):
         return self.phone
@@ -90,14 +90,6 @@ class Record:
         self.del_phone(old_phone)
         self.add_phone(nev_phone)
 
-    def change_name(self, new_name):
-        if new_name:
-            self.name = new_name
-            return self
-        else:
-            raise Exception("новое имя не может пустой строкой")
-        return self
-
     def days_tobirthday(self):
         if self.birthday:
             if date.today() > self.birthday.replace(year=date.today().year):
@@ -108,10 +100,7 @@ class Record:
     def __repr__(self):
         # форматирует и выводит одну запись в читаемом виде одной или нескольких строк
         # (если запись содержит несколько телефонов)
-        st = f"| {self.name:.<40}| {self.birthday.__repr__(): <11} | {self.phones[0].__repr__() if self.phones else '': <20} |\n"
-        if len(self.phones) > 1:
-            for elem in self.phones[1:]:
-                st += f" |                                         |             | {elem.__repr__(): <20} |\n"
+        st = f"{self.name} SP {self.birthday.__repr__()} SP {self.phones.__repr__()}\n"
         return st
 
     def add_birthday(self, birthday):
@@ -198,10 +187,9 @@ class AddressBook(UserDict):
         # удаляет запись с ключем name (строка)
         # из существующей адресной книги. Если такого имени нет - генерирует исключение
         if name in self:
-            deleted_record = self.pop(name)
+            self.pop(name)
         else:
             raise KeyError('записи с таким именем нет в адресной книге')
-        return deleted_record
 
     def search(self, pattern):
         # возвращает объект класса AdressBook, содержащий
@@ -241,8 +229,6 @@ class AddressBook(UserDict):
             record = Record(name, date_of_birth).add_phone(phone)
             self.add_record(record)
             print(f'Добавлена запись: {name}  {date_of_birth}  {phone}')
-            print(
-                f'вид в record: {record.name}  {record.birthday.birthday:%d-%m-%Y}  {record.phones[0].phone}')
 
 
 if __name__ == '__main__':
