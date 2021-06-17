@@ -1,5 +1,3 @@
-import time
-
 from classes import AddressBook, Record, Phone, Birthday
 from os import name
 import sys
@@ -46,7 +44,6 @@ def error_handler(func):
             return "Give me name and phone please"
         except IndexError:
             return "Enter user name or command"
-
     return inner
 
 
@@ -120,41 +117,101 @@ def get_handler(res_pars, addressbook):
         - bd add - формат: bd add name dd-mm-YYYY - ввод либо перезапись ранее введенной даты рождения. Соблюдайте формат ввода даты.
         - search - формат: search pattern - поиск совпадений по полям имени и телефонов. Будут выведены все записи в которых есть совпадения'''
 
+    def hello_f(*args):
+        return 'How can I help you?'
+
+    def exit_f(name, phone, contacts):
+        return None
+
     def add_f(addressbook):
-        name = pretty_input('Введите имя \n')
+        #  сначала создает запись с именем
+        #  потом последовательно вызывает функции
+        # для заполнения телефона, д/р, заметки, и т.д.
+        name = pretty_input('Введите имя ')
         record = Record(name)
-        phone = pretty_input('Введите телефон \n')
-        record.add_phone(phone)
-        birthday_str = pretty_input(
-            'Введите дату рождения в формате(дд-мм-гггг) или нажмите "ввод", чтобы пропустить:\n')
-        if birthday_str:
-            record.add_birthday(birthday_str)
         addressbook.add_record(record)
 
-        return colored(f'Контакт {name} успешно добавлен.', 'green')
+        add_phone(record)
+        change_bd(record)
+        change_adr(record)
+        change_eml(record)
+        add_note(record)
 
-    def hello_f(*args):
-        return colored('How can I help you?', 'magenta')
+        pretty_print(f'в адресную книгу внесена запись: \n{record}')
+        return True
 
-    # def change_f(name, phone, contacts):
-    # закоментирована, так как по сути своей совершенно бессмысленная функция
-    #    if not contacts.get(name):
-    #        raise Exception('this name is not in the contact list')
-    #    old_phone = contacts[name]
-    #    contacts[name] = phone#
-    #
-    #    return f'''for contact {name} number replaced
-    #            old number: {old_phone}
-    #            new number: {phone}'''
+    def add_note(record):
+        pass
+
+    def change_note(record):
+        pass
+
+    def change_eml(record):
+        pass
+
+    def change_adr(record):
+        pass
+
+    def change_name(record):
+        name = pretty_input('Введите новое имя ')
+        addressbook.del_record(name)
+        record.change_name(name)
+        addressbook(record)
+
+    def change_bd(record):
+        birthday_str = pretty_input(
+            'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
+        if birthday_str:
+            result = record.add_birthday(birthday_str)
+            if isinstance(result, Exception):
+                return result
+            return f'в запись добавлен день рождения: \n {record}'
+        else:
+            return 'абоненту день рождения не добавлен'
+
+    def add_phone(record):
+        # позволяет добавить в запись дополнительный телефон
+        phone = pretty_input('Entry phone number ')
+        result = record.add_phone(phone)
+
+        if isinstance(result, Exception):
+            return result
+        return f'в запись добавлен новый телефон: \n {record}'
+
+    def change_phone(record):
+
+        pretty_print(record)
+        old_phone = pretty_input(
+            'What number you want to change (enter item number) ')
+
+        new_phone = pretty_input('Entry new phone number ')
+        result = record.change_phone(old_phone, new_phone)
+        if isinstance(result, Exception):
+            return result
+        return f'в запись добавлен новый телефон: \n {record}'
+
+    def change_f(addressbook):
+        # была закоментирована, так как по сути своей совершенно бессмысленная функция
+        name = pretty_input('Введите имя ')
+        record = addressbook[name]
+        pretty_print(record)
+        pretty_print(menu_change)
+        item_number = input('>>>  ')
+        return func_change[item_number](record)
 
     def search(addressbook):
-        user_input = pretty_input('What are you looking for?')
+        user_input = pretty_input('What are you looking for?  ')
         # осуществляет поиск введенной строки во всех текстовых полях адресной книги
         result = addressbook.search(user_input)
 
         if not result:
             raise Exception('По данному запросу ничего не найдено')
 
+        return result
+
+    def delete_f(addressbook):
+        name = pretty_input('Введите имя ')
+        result = addressbook.del_record(name)
         return result
 
     def show_all_f(addressbook, N=10):
@@ -198,29 +255,37 @@ def get_handler(res_pars, addressbook):
             table.add_row(xr)
         return colored(table, 'green')
 
-    def exit_f():
-        return None
+    def unrecognize_f(name, raw_string, x):
+        # Константин, твой выход !
+        return 'ввод не распознан. Для получения помощи введите "help"'
 
-    def unrecognize_f(name, phone, contacts):
-        return colored('Ввод не распознан. Для получения помощи введите "help"', 'yellow')
+    menu_change = ''' 
+    What you want to change:    1. name 
+                                2. change phone 
+                                3. add phone
+                                4. change birthday
+                                5. change e-mail
+                                6. change address
+                                7. change note
+                                8. add note
+    '''
 
-    def add_phone(name, phone, addressbook):
-        # позволяет добавить в запись дополнительный телефон
-        if name in addressbook:
-            addressbook[name].add_phone(phone)
-        else:
-            return colored(f'Контакт {name} отсутствует в адресной книге', 'yellow')
-        return f'В запись добавлен новый телефон: \n {addressbook[name]}'
-
-    def bd_add_f(name, birthday_str, addressbook):
-        # позволяет добавить (перезаписать, если ранее было введена) дату рождения в запись
-        if name in addressbook:
-            addressbook[name].add_birthday(birthday_str)
-        else:
-            return f'Контакт {name} отсутствует в адресной книге'
-        return f'Контакту добавлена дата рождения: \n {addressbook[name]}'
+    func_change = {'1':  change_name,
+                   '2': change_phone,
+                   '3': add_phone,
+                   '4': change_bd,
+                   '5': change_eml,
+                   '6': change_adr,
+                   '7': change_note,
+                   '8': add_note}
 
     HANDLING = {
+        '1': add_f,
+        '2': change_f,
+        '3': delete_f,
+        '4': search,
+        '5': show_all_f,
+        '6': exit_f,
         'hello': hello_f,
         'exit': exit_f,
         '.': exit_f,
@@ -230,21 +295,29 @@ def get_handler(res_pars, addressbook):
         'show all': show_all_f,
         'phone': search,
         'search': search,
-        # 'change': change_f,
+        'change': change_f,
         'unrecognize': unrecognize_f,
         'help': help_f,
         'other phone': add_phone,
-        'bd add': bd_add_f
+        'bd add': change_bd
     }
+
+    result = HANDLING.get
     return HANDLING[res_pars](addressbook)
 
 
 def pretty_input(text):
+    # функция для Ярослава
     # print(chr(3196)*80)
     user_input = input(text)
     print(colored(chr(3196) * 80, color='green'))
-
     return user_input
+
+
+def pretty_print(text):
+    # функция для Ярослава
+    print(colored(text, color='green'))
+    print(chr(3196)*80)
 
 
 def main():
@@ -262,13 +335,24 @@ def main():
         path_file = Path(path) / name
         addressbook = deserialize_users(path_file)
 
+    menu = '''You can :
+                1. add abonent to addressbook
+                2. change abonent's record in addressbook
+                3. delete abonent from addressbook
+                4. seek abonent or phone
+                5. show all 
+                6. end 
+            Choose menu item number'''
+
     while True:
         # addressbook.add_fake_records(40)
+
+        pretty_print(menu)
         input_string = input('>>>  ')
         # убираем разбор строки на слова и поиск команды
-        # res_pars = parse(input_string)
+        #res_pars = parse(input_string)
 
-        # сейчас input_string  должен содержать только команду - действие
+        # сейчас input_string  должен содержать только номер команду - действие
 
         result = get_handler(input_string, addressbook)
         if not result:
