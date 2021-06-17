@@ -90,6 +90,14 @@ class Record:
         self.del_phone(old_phone)
         self.add_phone(nev_phone)
 
+    def change_name(self, new_name):
+        if new_name:
+            self.name = new_name
+            return self
+        else:
+            raise Exception("новое имя не может пустой строкой")
+        return self
+
     def days_tobirthday(self):
         if self.birthday:
             if date.today() > self.birthday.replace(year=date.today().year):
@@ -190,9 +198,10 @@ class AddressBook(UserDict):
         # удаляет запись с ключем name (строка)
         # из существующей адресной книги. Если такого имени нет - генерирует исключение
         if name in self:
-            self.pop(name)
+            deleted_record = self.pop(name)
         else:
             raise KeyError('записи с таким именем нет в адресной книге')
+        return deleted_record
 
     def search(self, pattern):
         # возвращает объект класса AdressBook, содержащий
