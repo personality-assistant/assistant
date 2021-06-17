@@ -13,14 +13,15 @@ class Note(UserDict):
         self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
     """
 
-    def creat_note(self, data):
+    def add_note(self, data):
         self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
 
     def __repr__(self):
         result = ''
+        log = f'Note has not been made yet.'
         for k, v in self.items():
-            result += f'{k} - {v}'
-        result = result if result else f'Note has not been made yet.'
+            result += f'{k} - {v}\n'
+        result = result if result else log
         return result
 
 
@@ -38,7 +39,7 @@ class Email:
         regex = r'\b[a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*\.[a-zA-Z]{2,}\b'
         log = 'Invalid email.'
         raw_email = re.search(regex, email)
-        email = raw_email.group() if email else log
+        email = raw_email.group() if raw_email != None else log
         self.__email = email
 
 
