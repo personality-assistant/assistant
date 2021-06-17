@@ -166,7 +166,8 @@ def get_handler(res_pars, addressbook):
         print(f'всего к выводу {len(addressbook)} записей: ')
         for block in addressbook.out_iterator(n):
             print(pretty(block))
-            usr_choice = input(colored('Нажмите "Enter", или введите "q", что бы закончить просмотр.\n', 'yellow'))
+            usr_choice = input(colored(
+                'Нажмите "Enter", или введите "q", что бы закончить просмотр.\n', 'yellow'))
             if usr_choice:
                 '''Если пользователь вводит любой символ, его перебрасывает на основное меню.'''
                 break
@@ -181,11 +182,18 @@ def get_handler(res_pars, addressbook):
         3. Добавляет обработанную инфу в таблицу
         4. Возвращает таблицу
         '''
-        table = PrettyTable(['Name', 'Birthday', 'Number(s)'])
+        #from prettytable import ORGMODE
+        # vertical_char=chr(9553), horizontal_char=chr(9552), junction_char=chr(9580)
+        # vertical_char=chr(9475), horizontal_char=chr(9473), junction_char=chr(9547)
+
+        table = PrettyTable(
+            ['Name', 'Birthday', 'Number(s)'], vertical_char=chr(2947), horizontal_char=chr(2947), junction_char=chr(2947))
+        # table.set_style(ORGMODE)
         nx = str(block).split('\n')
         for j in range(len(nx) - 1):
             xr = nx[j].split('SP')
-            a = str(xr.pop(2)).replace('[', '').replace(']', '').replace(',', '\n')
+            a = str(xr.pop(2)).replace(
+                '[', '').replace(']', '').replace(',', '\n')
             xr.append(a)
             table.add_row(xr)
         return colored(table, 'green')
