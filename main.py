@@ -2,8 +2,11 @@ from classes import AddressBook, Record, Phone, Birthday
 from os import name
 import sys
 import pickle
+import time
 from pathlib import Path
 from faker import Faker
+from prettytable import PrettyTable
+from termcolor2 import colored
 
 # директория может быть выбрана при запуске программы, имя файла - константа.
 CONTACTS_FILE = 'contacts.dat'
@@ -219,10 +222,38 @@ def get_handler(res_pars, addressbook):
         n = int(N)
         print(f'всего к выводу {len(addressbook)} записей: ')
         for block in addressbook.out_iterator(n):
-            print(block)
-            print('---------------------------------------------------------------------------------------------------')
-            input('для продолжения вывода нажмите "ввод"')
-        return 'вывод окончен'
+            print(pretty(block))
+            usr_choice = input(colored(
+                'Нажмите "Enter", или введите "q", что бы закончить просмотр.\n', 'yellow'))
+            if usr_choice:
+                '''Если пользователь вводит любой символ, его перебрасывает на основное меню.'''
+                break
+            continue
+        return colored('Вывод окончен!', 'yellow')
+
+    def pretty(block):
+        '''
+        Данная функция создана исключительно для обработки функции show_all,
+        1. Принимает блок
+        2. Парсит его
+        3. Добавляет обработанную инфу в таблицу
+        4. Возвращает таблицу
+        '''
+        #from prettytable import ORGMODE
+        # vertical_char=chr(9553), horizontal_char=chr(9552), junction_char=chr(9580)
+        # vertical_char=chr(9475), horizontal_char=chr(9473), junction_char=chr(9547)
+
+        table = PrettyTable(
+            ['Name', 'Birthday', 'Number(s)'], vertical_char=chr(2947), horizontal_char=chr(2947), junction_char=chr(2947))
+        # table.set_style(ORGMODE)
+        nx = str(block).split('\n')
+        for j in range(len(nx) - 1):
+            xr = nx[j].split('SP')
+            a = str(xr.pop(2)).replace(
+                '[', '').replace(']', '').replace(',', '\n')
+            xr.append(a)
+            table.add_row(xr)
+        return colored(table, 'green')
 
     def unrecognize_f(name, raw_string, x):
         # Константин, твой выход !
@@ -279,13 +310,13 @@ def pretty_input(text):
     # функция для Ярослава
     # print(chr(3196)*80)
     user_input = input(text)
-    print(chr(3196)*80)
+    print(colored(chr(3196) * 80, color='green'))
     return user_input
 
 
 def pretty_print(text):
     # функция для Ярослава
-    print(text)
+    print(colored(text, color='green'))
     print(chr(3196)*80)
 
 

@@ -108,10 +108,7 @@ class Record:
     def __repr__(self):
         # форматирует и выводит одну запись в читаемом виде одной или нескольких строк
         # (если запись содержит несколько телефонов)
-        st = f"| {self.name:.<40}| {self.birthday.__repr__(): <11} | {self.phones[0].__repr__() if self.phones else '': <20} |\n"
-        if len(self.phones) > 1:
-            for elem in self.phones[1:]:
-                st += f" |                                         |             | {elem.__repr__(): <20} |\n"
+        st = f"{self.name} SP {self.birthday.__repr__()} SP {self.phones.__repr__()}\n"
         return st
 
     def add_birthday(self, birthday):
