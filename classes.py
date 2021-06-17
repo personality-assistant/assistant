@@ -1,6 +1,45 @@
 from collections import UserDict
 from datetime import datetime, date, timedelta
 from faker import Faker
+import re
+
+
+class Note(UserDict):
+    """
+    FOR JUST IN CASE
+
+    def __init__(self, data=None):
+        super(Note, self).__init__()
+        self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
+    """
+
+    def creat_note(self, data):
+        self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
+
+    def __repr__(self):
+        result = ''
+        for k, v in self.items():
+            result += f'{k} - {v}'
+        result = result if result else f'Note has not been made yet.'
+        return result
+
+
+class Email:
+    def __init__(self, email):
+        self.__email = None
+        self.email = email
+
+    @property
+    def email(self):
+        return self.__email
+
+    @email.setter
+    def email(self, email):
+        regex = r'\b[a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*\.[a-zA-Z]{2,}\b'
+        log = 'Invalid email.'
+        raw_email = re.search(regex, email)
+        email = raw_email.group() if email else log
+        self.__email = email
 
 
 class Phone:
