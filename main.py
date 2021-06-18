@@ -38,12 +38,7 @@ def error_handler(func):
             return result
         except Exception as message:
             return message.args[0]
-        except KeyError:
-            return "No user with given name"
-        except ValueError:
-            return "Give me name and phone please"
-        except IndexError:
-            return "Enter user name or command"
+
     return inner
 
 
@@ -120,7 +115,7 @@ def get_handler(res_pars, addressbook):
     def hello_f(*args):
         return 'How can I help you?'
 
-    def exit_f(name, phone, contacts):
+    def exit_f(*args):
         return None
 
     def add_f(addressbook):
@@ -140,15 +135,19 @@ def get_handler(res_pars, addressbook):
         pretty_print(f'в адресную книгу внесена запись: \n{record}')
         return True
 
+    @error_handler
     def add_note(record):
         pass
 
+    @error_handler
     def change_note(record):
         pass
 
+    @error_handler
     def change_eml(record):
         pass
 
+    @error_handler
     def change_adr(record):
         pass
 
@@ -158,6 +157,7 @@ def get_handler(res_pars, addressbook):
         record.change_name(name)
         addressbook(record)
 
+    @error_handler
     def change_bd(record):
         birthday_str = pretty_input(
             'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
@@ -169,6 +169,7 @@ def get_handler(res_pars, addressbook):
         else:
             return 'абоненту день рождения не добавлен'
 
+    @error_handler
     def add_phone(record):
         # позволяет добавить в запись дополнительный телефон
         phone = pretty_input('Entry phone number ')
@@ -178,6 +179,7 @@ def get_handler(res_pars, addressbook):
             return result
         return f'в запись добавлен новый телефон: \n {record}'
 
+    @error_handler
     def change_phone(record):
 
         pretty_print(record)
@@ -191,7 +193,7 @@ def get_handler(res_pars, addressbook):
         return f'в запись добавлен новый телефон: \n {record}'
 
     def change_f(addressbook):
-        # была закоментирована, так как по сути своей совершенно бессмысленная функция
+
         name = pretty_input('Введите имя ')
         record = addressbook[name]
         pretty_print(record)
@@ -207,7 +209,7 @@ def get_handler(res_pars, addressbook):
         if not result:
             raise Exception('По данному запросу ничего не найдено')
 
-        return result
+        return pretty_table(result, N=10)
 
     def delete_f(addressbook):
         name = pretty_input('Введите имя ')
@@ -215,53 +217,15 @@ def get_handler(res_pars, addressbook):
         return result
 
     def show_all_f(addressbook, N=10):
-        # выводит на экран всю адресную книгу блоками по N записей. Основная обработка
-        # реализована как метод класса addressbook, что позволяет использовать аналогичный
-        # вывод для результатов поиска по запросам, так как функции поиска возвращают
-        # объект типа addressbook с результатами
-        n = int(N)
-        print(f'всего к выводу {len(addressbook)} записей: ')
-        for block in addressbook.out_iterator(n):
-            print(pretty(block))
-            usr_choice = input(colored(
-                'Нажмите "Enter", или введите "q", что бы закончить просмотр.\n', 'yellow'))
-            if usr_choice:
-                '''Если пользователь вводит любой символ, его перебрасывает на основное меню.'''
-                break
-            continue
-        return colored('Вывод окончен!', 'yellow')
-
-    def pretty(block):
-        '''
-        Данная функция создана исключительно для обработки функции show_all,
-        1. Принимает блок
-        2. Парсит его
-        3. Добавляет обработанную инфу в таблицу
-        4. Возвращает таблицу
-        '''
-        #from prettytable import ORGMODE
-        # vertical_char=chr(9553), horizontal_char=chr(9552), junction_char=chr(9580)
-        # vertical_char=chr(9475), horizontal_char=chr(9473), junction_char=chr(9547)
-
-        table = PrettyTable(
-            ['Name', 'Birthday', 'Number(s)'], vertical_char=chr(2947), horizontal_char=chr(2947), junction_char=chr(2947))
-        # table.set_style(ORGMODE)
-        nx = str(block).split('\n')
-        for j in range(len(nx) - 1):
-            xr = nx[j].split('SP')
-            a = str(xr.pop(2)).replace(
-                '[', '').replace(']', '').replace(',', '\n')
-            xr.append(a)
-            table.add_row(xr)
-        return colored(table, 'green')
+        return pretty_table(addressbook, N)
 
     def unrecognize_f(name, raw_string, x):
         # Константин, твой выход !
         return 'ввод не распознан. Для получения помощи введите "help"'
 
-    menu_change = ''' 
-    What you want to change:    1. name 
-                                2. change phone 
+    menu_change = '''
+    What you want to change:    1. name
+                                2. change phone
                                 3. add phone
                                 4. change birthday
                                 5. change e-mail
@@ -306,10 +270,57 @@ def get_handler(res_pars, addressbook):
     return HANDLING[res_pars](addressbook)
 
 
+def pretty_table(addressbook, N=10):
+    # выводит на экран всю адресную книгу блоками по N записей. Основная обработка
+    # реализована как метод класса addressbook, что позволяет использовать аналогичный
+    # вывод для результатов поиска по запросам, так как функции поиска возвращают
+    # объект типа addressbook с результатами
+    n = int(N)
+    pretty_print(f'всего к выводу {len(addressbook)} записей: ')
+    for block in addressbook.out_iterator(n):
+        print(pretty(block))
+        usr_choice = input(colored(
+            'Нажмите "Enter", или введите "q", что бы закончить просмотр.\n', 'yellow'))
+        if usr_choice:
+            '''Если пользователь вводит любой символ, его перебрасывает на основное меню.'''
+            break
+        continue
+
+    return colored('Вывод окончен!', 'yellow')
+
+
+def pretty(block):
+    '''
+        Данная функция создана исключительно для обработки функции show_all,
+        1. Принимает блок
+        2. Парсит его
+        3. Добавляет обработанную инфу в таблицу
+        4. Возвращает таблицу
+        '''
+    # from prettytable import ORGMODE
+    # vertical_char=chr(9553), horizontal_char=chr(9552), junction_char=chr(9580)
+    # vertical_char=chr(9475), horizontal_char=chr(9473), junction_char=chr(9547)
+    #  vertical_char="⁝", horizontal_char="᠃", junction_char="྿"
+    # ஃ ৹ ∘"܀" "܅" ྿ ፠ ᎒ ። ᠃
+
+    table = PrettyTable(
+        ['Name', 'Birthday', 'Number(s)'], vertical_char="⁝", horizontal_char="᠃", junction_char="྿")
+    # table.set_style(ORGMODE)
+    nx = str(block).split('\n')
+    for j in range(len(nx) - 1):
+        xr = nx[j].split('SP')
+        a = str(xr.pop(2)).replace(
+            '[', '').replace(']', '').replace(',', '\n')
+        xr.append(a)
+        table.add_row(xr)
+    return colored(table, 'green')
+
+
 def pretty_input(text):
     # функция для Ярослава
     # print(chr(3196)*80)
-    user_input = input(text)
+    print(colored(text, color='green'))
+    user_input = input('>>> ')
     print(colored(chr(3196) * 80, color='green'))
     return user_input
 
@@ -350,7 +361,7 @@ def main():
         pretty_print(menu)
         input_string = input('>>>  ')
         # убираем разбор строки на слова и поиск команды
-        #res_pars = parse(input_string)
+        # res_pars = parse(input_string)
 
         # сейчас input_string  должен содержать только номер команду - действие
 
