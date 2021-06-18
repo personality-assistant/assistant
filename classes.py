@@ -1,6 +1,46 @@
 from collections import UserDict
 from datetime import datetime, date, timedelta
 from faker import Faker
+import re
+
+
+class Note(UserDict):
+    """
+    FOR JUST IN CASE
+
+    def __init__(self, data=None):
+        super(Note, self).__init__()
+        self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
+    """
+
+    def add_note(self, data):
+        self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
+
+    def __repr__(self):
+        result = ''
+        log = f'Note has not been made yet.'
+        for k, v in self.items():
+            result += f'{k} - {v}\n'
+        result = result if result else log
+        return result
+
+
+class Email:
+    def __init__(self, email):
+        self.__email = None
+        self.email = email
+
+    @property
+    def email(self):
+        return self.__email
+
+    @email.setter
+    def email(self, email):
+        regex = r'\b[a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*\.[a-zA-Z]{2,}\b'
+        log = 'Invalid email.'
+        raw_email = re.search(regex, email)
+        email = raw_email.group() if raw_email != None else log
+        self.__email = email
 
 
 class Phone:
@@ -25,11 +65,11 @@ class Phone:
     @phone.setter
     def phone(self, phone):
         num = phone.translate(str.maketrans('', '', '+() -_'))
-        if num.isdigit() and (3 <= len(num) <= 20):
+        if num.isdigit() and (9 <= len(num) <= 12):
             self.__phone = num
         else:
-            raise ValueError(
-                'телефон при вводе может содержать от 3 до 20 цифр и символы: пробел +-()xX.[]_')
+            raise Exception(
+                'Телефон при вводе может содержать от 9 до 12 цифр и символы: пробел +-()xX.[]_')
 
     def __repr__(self):
         return self.phone
@@ -50,10 +90,10 @@ class Birthday:
     def birthday(self, new_value):
         if isinstance(new_value.date(), date):
             if new_value.date() > date.today():
-                raise ValueError('введенная дата роджения в будущем')
+                raise Exception('введенная дата роджения в будущем')
             self.__birthday = new_value
         else:
-            raise TypeError('поле Birthday.birthday должно быть типа datetime')
+            raise Exception('поле Birthday.birthday должно быть типа datetime')
 
     def __repr__(self):
         return self.birthday.strftime('%d-%m-%Y')
@@ -70,11 +110,13 @@ class Record:
     def add_phone(self, phone):
         # добавляет номер телефона в существующую запись. Если такой номер есть - генерирует исключение
         if Phone(phone) in self.phones:
-            raise ValueError(
+            raise Exception(
                 'добавление телефона: такой номер уже есть в списке')
         else:
             self.phones.append(Phone(phone))
-        return self
+        result = AddressBook()
+        result.add_record(self)
+        return result
 
     def del_phone(self, phone):
         # удаляет телефон из записи. При попытке удалить несуществующий номер
@@ -82,28 +124,27 @@ class Record:
         if Phone(phone) in self.phones:
             self.phones.remove(Phone(phone))
         else:
-            raise ValueError(
+            raise Exception(
                 'операция удаления: такого телефона нет в данной записи')
+        result = AddressBook()
+        result.add_record(self)
+        return result
 
     def change_phone(self, old_phone, nev_phone):
         # замена номера телефона - удаление старого и добавление нового
         self.del_phone(old_phone)
         self.add_phone(nev_phone)
-
-    def change_name(self, new_name):
-        if new_name:
-            self.name = new_name
-            return self
-        else:
-            raise Exception("новое имя не может пустой строкой")
-        return self
+        result = AddressBook()
+        result.add_record(self)
+        return result
 
     def days_tobirthday(self):
         if self.birthday:
             if date.today() > self.birthday.replace(year=date.today().year):
                 return (self.birthday.replace(year=date.today().year + 1) - date.today()).days
             return (self.birthday.replace(year=date.today().year) - date.today()).days
-        return f'Не введена дата родения для {self.name.value}'
+
+        raise Exception(f'Не введена дата родения для {self.name}')
 
     def __repr__(self):
         # форматирует и выводит одну запись в читаемом виде одной или нескольких строк
@@ -114,6 +155,9 @@ class Record:
     def add_birthday(self, birthday):
         # добавляет день рождения в существующую запись
         self.birthday = Birthday(birthday)
+        result = AddressBook()
+        result.add_record(self)
+        return result
 
     def search_birthday(self, data_start, data_stop=False, year: bool = False):
         # если дата рождения находится в интервале от data до data_stop\
@@ -156,6 +200,10 @@ class Record:
 
 
 class AddressBook(UserDict):
+    def __init__(self, record=None):
+        super().__init__()
+        if record:
+            self[record.name] = record
 
     def out_iterator(self, n):
         '''
@@ -187,18 +235,22 @@ class AddressBook(UserDict):
         # добавляет новую запись в существующую адрессную книгу.
         # Если запись с таким ключем (именем) уже существует - генерирует исключение
         if record.name in self:
-            raise KeyError(
+            raise Exception(
                 'Запись с таким именем уже существует в адресной книге')
         self[record.name] = record
+
+        return AddressBook(record)
 
     def del_record(self, name: str):
         # удаляет запись с ключем name (строка)
         # из существующей адресной книги. Если такого имени нет - генерирует исключение
+
         if name in self:
-            deleted_record = self.pop(name)
+            result_rec = self.pop(name)
         else:
-            raise KeyError('записи с таким именем нет в адресной книге')
-        return deleted_record
+            raise Exception('записи с таким именем нет в адресной книге')
+
+        return AddressBook(result_rec)
 
     def search(self, pattern):
         # возвращает объект класса AdressBook, содержащий
@@ -238,8 +290,6 @@ class AddressBook(UserDict):
             record = Record(name, date_of_birth).add_phone(phone)
             self.add_record(record)
             print(f'Добавлена запись: {name}  {date_of_birth}  {phone}')
-            print(
-                f'вид в record: {record.name}  {record.birthday.birthday:%d-%m-%Y}  {record.phones[0].phone}')
 
 
 if __name__ == '__main__':
