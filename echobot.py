@@ -90,7 +90,6 @@ def deserialize_users(url):
     storage.child(cloudfilename).download('', filename)
     with open(filename, 'r') as f:
         x = f.read()
-    # print(result)
     
     '''
 
@@ -105,8 +104,28 @@ def deserialize_users(url):
 def serialize_users(addressbook, path):
     """saves a file with contacts on the path (object pathlib.Path) to disk"""
     f = pickle.dumps(addressbook)
-    print(f)
+    # print(f)
     storage.child(path).put(f)
+
+
+def echo(update: Update, context: CallbackContext) -> None:
+    """Echo the user message."""
+    x = update.message.text
+
+    # Storage
+    # print(update)
+    # print(type(update.username))
+    # print(update.message.chat.username)
+    username = update.message.chat.username
+    id_user = update.message.chat.id
+
+    filename = f"contacts_{id_user}.txt"
+    cloudfilename = f"users/{filename}"
+    url = storage.child(cloudfilename).get_url(None)
+    addressbook = deserialize_users(url) + '\n' + x
+    #print(url, addressbook)
+    serialize_users(addressbook, cloudfilename)
+    update.message.reply_text(addressbook)
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -189,26 +208,6 @@ def add_note(update: Update, context: CallbackContext) -> None:
 def help_command(update: Update, context: CallbackContext) -> None:
     """Send a message when the command /help is issued."""
     update.message.reply_text('Help!')
-
-
-def echo(update: Update, context: CallbackContext) -> None:
-    """Echo the user message."""
-    x = update.message.text
-
-    # Storage
-    # print(update)
-    # print(type(update.username))
-    # print(update.message.chat.username)
-    username = update.message.chat.username
-    id_user = update.message.chat.id
-
-    filename = f"contacts_{id_user}.txt"
-    cloudfilename = f"users/{filename}"
-    url = storage.child(cloudfilename).get_url(None)
-    addressbook = deserialize_users(url) + x
-    print(url, addressbook)
-    serialize_users(addressbook, cloudfilename)
-    update.message.reply_text(addressbook)
 
 
 def main() -> None:
