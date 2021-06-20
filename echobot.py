@@ -33,10 +33,6 @@ firebase = pyrebase.initialize_app(firebaseConfig)
 storage = firebase.storage()
 
 
-# FBConn = firebase.FirebaseApplication(
-#    'https://telegrambot-assistants-default-rtdb.firebaseio.com', None)
-
-
 token = "1753379890:AAGP2o4U-DJjX7X5OenBcswPVAoo3ckK56U"
 """
 Simple Bot to reply to Telegram messages.
@@ -218,7 +214,6 @@ def main() -> None:
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
 
-    # on different commands - answer in Telegram
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("help", help_command))
 
