@@ -6,6 +6,10 @@ name = "pypi"
 [packages]
 python-telegram-bot = "*"
 faker = "*"
+python-firebase = "*"
+requests = "==1.1.0"
+pyrebase = "*"
+pyrebase4 = "*"
 
 [dev-packages]
 
