@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 # pylint: disable=C0116,W0613
 # This program is dedicated to the public domain under the CC0 license.
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-from telegram import Update, ForceReply
 
 from telegram.ext import (Updater, CommandHandler, MessageHandler,
                           Filters, CallbackQueryHandler,
                           ConversationHandler, CallbackContext)
-from telegram import Update, Bot, ReplyKeyboardRemove
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
-
+from telegram import (Update, Bot, ForceReply, ReplyKeyboardRemove,
+                      InlineKeyboardButton, InlineKeyboardMarkup,
+                      ReplyKeyboardMarkup, KeyboardButton)
+from classes import AddressBook, Record, Phone, Birthday
 import logging
 import pyrebase
+import urllib
+import pickle
+
+
 firebaseConfig = {
     "apiKey": "AIzaSyDyPGUebWDC7ojqNgjsbnyRTzpq2Odz-Ig",
     "authDomain": "telegrambot-assistants.firebaseapp.com",
@@ -76,6 +79,34 @@ keyboard_change_record = [
     [InlineKeyboardButton("Добавить email", callback_data="add_email")],
     [InlineKeyboardButton("Добавить заметку", callback_data="add_note")],
 ]
+
+
+def deserialize_users(url):
+    """using the path "path" reads the file with contacts"""
+    '''
+    with open(filename, 'a') as f:
+        f.write(x+'\n')
+    storage.child(cloudfilename).put(filename)
+    storage.child(cloudfilename).download('', filename)
+    with open(filename, 'r') as f:
+        x = f.read()
+    # print(result)
+    
+    '''
+
+    try:
+        f = urllib.request.urlopen(url).read()
+        addressbook = pickle.loads(f)
+    except:
+        addressbook = ''
+    return addressbook
+
+
+def serialize_users(addressbook, path):
+    """saves a file with contacts on the path (object pathlib.Path) to disk"""
+    f = pickle.dumps(addressbook)
+    print(f)
+    storage.child(path).put(f)
 
 
 def start(update: Update, context: CallbackContext) -> None:
@@ -164,34 +195,20 @@ def echo(update: Update, context: CallbackContext) -> None:
     """Echo the user message."""
     x = update.message.text
 
-    data = {
-        'Name': "....",
-        'email': '!!!!'
-    }
-    data_to_upload = {
-        'message': x
-
-    }
-
     # Storage
-    print(update)
+    # print(update)
     # print(type(update.username))
-    print(update.message.chat.username)
+    # print(update.message.chat.username)
     username = update.message.chat.username
     id_user = update.message.chat.id
-    filename = f"contacts_{id_user}_{username}.txt"
-    with open(filename, 'a') as f:
-        f.write(x+'\n')
 
+    filename = f"contacts_{id_user}.txt"
     cloudfilename = f"users/{filename}"
-    storage.child(cloudfilename).put(filename)
-
-    storage.child(cloudfilename).download('', filename)
-
-    with open(filename, 'r') as f:
-        x = f.read()
-    # print(result)
-    update.message.reply_text(x)
+    url = storage.child(cloudfilename).get_url(None)
+    addressbook = deserialize_users(url) + x
+    print(url, addressbook)
+    serialize_users(addressbook, cloudfilename)
+    update.message.reply_text(addressbook)
 
 
 def main() -> None:
