@@ -12,6 +12,10 @@ Using **pretty-assistant** you can enter a clear command to obtain the desired c
 
 In order to download **pretty-assistant** you must have [pip](https://pypi.org/project/pip/) installed on your PC and separate virtual environment.
 
+You could download **pretty-assistant** in command line with following command in your virtual environment:
+
+**pip install -i https://test.pypi.org/simple/ pretty-assistant**
+
 After downloading **pretty-assistant** you have to install all dependencies listed in **requirements.txt** file [here](https://github.com/personality-assistant/assistant/blob/main/requirements.txt) inside your virtual environment entering following command in command line:
 
 **pip install --upgrade --force-reinstall -r requirements.txt**
