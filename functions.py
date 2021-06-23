@@ -136,7 +136,7 @@ def error_handler(func):
     # сюда вынесена обработка всех возникающих ошибок в ходе работы программы - как типов и
     # форматов, так и логические (дата рождения в будущем, попытка удалить несуществующий параметр и т.д.)
     def inner(*args):
-        #print(type(args[0]), type(args[1]))
+        # print(type(args[0]), type(args[1]))
         if isinstance(args[-1], AddressBook):
             addressbook = deserialize_users(
                 path_file) if Path.exists(path_file) else AddressBook()
@@ -226,7 +226,7 @@ def get_handler(res_pars, addressbook):
         return 'Привет! Чем я могу Вам помочь?'
 
     def exit_f(*args):
-        return None
+        return 'bye'
 
     def is_in(addressbook, name):
         return name in addressbook
@@ -312,15 +312,32 @@ def get_handler(res_pars, addressbook):
         return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
 
     def del_phone(record):
-        pass
+        if isinstance(record, Record):
+            answer = 'н'
+            while answer != 'д':
+                number_old_phone = pretty_input(
+                    'Какой номер хотите удалить  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад  ')
+                if not number_old_phone:
+                    return True
+                if 0 < int(number_old_phone) <= len(record.phones):
+                    old_phone = record.phones[number_old_phone-1].phone
+                    answer = pretty_input(f'Этот номер {old_phone}?(д/н)')
+                else:
+                    answer = 'н'
+                    pretty_print('У абонента нет столько телефонов')
+            result = record.del_email(old_phone)
+            return f'У абонента удален номер: \ {pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
     def change_eml(record):
         if isinstance(record, Record):
             answer = 'н'
             while answer != 'д':
-                number_old_email = int(pretty_input(
-                    'Какой email хотите поменять  ? введите его порядковый номер (1/2/3..) '))
-                if 0 < number_old_email <= len(record.emails):
+                number_old_email = pretty_input(
+                    'Какой email хотите поменять  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад ')
+                if not number_old_email:
+                    return True
+                if 0 < int(number_old_email) <= len(record.emails):
                     old_email = record.emails[number_old_email-1].email
                     answer = pretty_input(f'Этот номер {old_email}?(д/н)')
                 else:
@@ -335,9 +352,11 @@ def get_handler(res_pars, addressbook):
         if isinstance(record, Record):
             answer = 'н'
             while answer != 'д':
-                number_old_email = int(pretty_input(
-                    'Какой email хотите удалить  ? введите его порядковый номер (1/2/3..) '))
-                if 0 < number_old_email <= len(record.emails):
+                number_old_email = pretty_input(
+                    'Какой email хотите удалить  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад  ')
+                if not number_old_email:
+                    return True
+                if 0 < int(number_old_email) <= len(record.emails):
                     old_email = record.emails[number_old_email-1].email
                     answer = pretty_input(f'Этот номер {old_email}?(д/н)')
                 else:
@@ -401,9 +420,11 @@ def get_handler(res_pars, addressbook):
         if isinstance(record, Record):
             answer = 'н'
             while answer != 'д':
-                number_old_phone = int(pretty_input(
-                    'Какой номер хотите поменять  ? введите его порядковый номер (1/2/3..) '))
-                if 0 < number_old_phone <= len(record.phones):
+                number_old_phone = pretty_input(
+                    'Какой номер хотите поменять  ? введите его порядковый номер (1/2/3..)  или Enter чтобы вернуться назад ')
+                if not number_old_phone:
+                    return True
+                if 0 < int(number_old_phone) <= len(record.phones):
                     old_phone = record.phones[number_old_phone-1].phone
                     answer = pretty_input(f'Этот номер {old_phone}?(д/н)')
                 else:
@@ -808,7 +829,8 @@ def get_handler(res_pars, addressbook):
         'unrecognize': unrecognize_f,
         'help': help_f,
         'other phone': add_phone,
-        'bd add': change_bd
+        'bd add': change_bd,
+        '': show_all_f
     }
 
     return HANDLING.get(res_pars)(addressbook) if HANDLING.get(res_pars) else unrecognize_f(res_pars, addressbook)

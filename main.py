@@ -53,7 +53,7 @@ def main():
         # сейчас input_string  должен содержать только номер команду - действие
 
         result = get_handler(input_string, addressbook)
-        if not result:
+        if result == 'bye':
             serialize_users(addressbook, path_file)
             print('Пока!')
             break
