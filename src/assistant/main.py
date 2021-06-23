@@ -1,8 +1,18 @@
 from ntpath import join
-from classes import AddressBook, Record, Phone, Birthday
+
+try:
+    from classes import *
+except:
+    from .classes import *
+
 from os import name
 import sys
-from functions import error_handler, deserialize_users, serialize_users, parse, pretty_print, get_handler
+
+try:
+    from functions import *
+except:
+    from .functions import *
+
 import time
 import nltk
 import pymorphy2
