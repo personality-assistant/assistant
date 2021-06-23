@@ -1,5 +1,5 @@
 from ntpath import join
-from classes_my import AddressBook, Record, Phone, Birthday
+from classes import AddressBook, Record, Phone, Birthday
 from os import name
 import sys
 from functions import error_handler, deserialize_users, serialize_users, parse, pretty_print, get_handler
