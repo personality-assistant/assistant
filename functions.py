@@ -1,14 +1,20 @@
 import pickle
 from prettytable import PrettyTable
 from termcolor2 import colored
-from classes_my import AddressBook, Record, Phone, Birthday
+from classes import AddressBook, Record, Phone, Birthday
 import nltk
 import re
 import pymorphy2
 import itertools
 import textwrap
 from datetime import datetime
+from pathlib import Path
 
+CONTACTS_FILE = 'contacts.dat'
+CONTACTS_DIR = ''
+path = CONTACTS_DIR
+name_file = CONTACTS_FILE
+path_file = Path(path) / name_file
 
 len_str = 105+19
 
@@ -58,7 +64,7 @@ def pretty_table(addressbook, N=10, color='yellow'):
         x = AddressBook()
         x[record.name] = record
         print(pretty(x))
-    #print('объект не является ни записью ни адресной книгой')
+    # print('объект не является ни записью ни адресной книгой')
 
 
 def pretty(block):
@@ -130,8 +136,15 @@ def error_handler(func):
     # сюда вынесена обработка всех возникающих ошибок в ходе работы программы - как типов и
     # форматов, так и логические (дата рождения в будущем, попытка удалить несуществующий параметр и т.д.)
     def inner(*args):
+        #print(type(args[0]), type(args[1]))
+        if isinstance(args[-1], AddressBook):
+            addressbook = deserialize_users(
+                path_file) if Path.exists(path_file) else AddressBook()
+
         try:
             result = func(*args)
+            if isinstance(args[-1], AddressBook):
+                serialize_users(addressbook, path_file)
             return result
         except Exception as message:
             return message.args[0]
@@ -270,7 +283,6 @@ def get_handler(res_pars, addressbook):
         pretty_print(f'найдена запись с именем {name}')
         return record
 
-    @error_handler
     def change_name(record):
         if isinstance(record, Record):
             name = enter_new_correct_name(addressbook)
@@ -283,7 +295,6 @@ def get_handler(res_pars, addressbook):
             return f'в записи изменено имя: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-    @error_handler
     def add_note(record):
         if isinstance(record, Record):
             note_new = pretty_input(
@@ -292,7 +303,6 @@ def get_handler(res_pars, addressbook):
             return f'в запись добавлена заметка: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-    @error_handler
     def add_eml(record):
         if isinstance(record, Record):
             email_new = pretty_input(
@@ -304,7 +314,6 @@ def get_handler(res_pars, addressbook):
     def del_phone(record):
         pass
 
-    @error_handler
     def change_eml(record):
         if isinstance(record, Record):
             answer = 'н'
@@ -322,7 +331,6 @@ def get_handler(res_pars, addressbook):
             return f'У абонента изменен email: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-    @error_handler
     def del_eml(record):
         if isinstance(record, Record):
             answer = 'н'
@@ -339,7 +347,6 @@ def get_handler(res_pars, addressbook):
             return f'У абонента удален email: \ {pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-    @error_handler
     def change_adr(record):
         if isinstance(record, Record):
             # address_old = record.address.__repr__() if record.address else 'пока не задан'
@@ -349,7 +356,6 @@ def get_handler(res_pars, addressbook):
             return f'в запись добавлен адрес: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
 
-    @error_handler
     def change_bd(record):
         if isinstance(record, Record):
             # birthday_old = record.birthday.__repr__() if record.birthday else 'пока не задан'
@@ -383,7 +389,6 @@ def get_handler(res_pars, addressbook):
             result = addressbook.search_birthday(data_start)
         return pretty_table(result, N=10)
 
-    @error_handler
     def add_phone(record):
         if isinstance(record, Record):
             # позволяет добавить в запись дополнительный телефон
@@ -392,7 +397,6 @@ def get_handler(res_pars, addressbook):
             return f'в запись добавлен новый телефон: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-    @error_handler
     def change_phone(record):
         if isinstance(record, Record):
             answer = 'н'
@@ -410,6 +414,7 @@ def get_handler(res_pars, addressbook):
             return f'в запись добавлен новый телефон: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
+    @error_handler
     def change_f(addressbook):
 
         record = search_record(addressbook)
@@ -428,6 +433,7 @@ def get_handler(res_pars, addressbook):
 
         return pretty_table(result, N=10)
 
+    @error_handler
     def delete_f(addressbook):
         name = pretty_input('Введите имя ')
         result = addressbook.del_record(name)

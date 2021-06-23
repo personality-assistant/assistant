@@ -1,5 +1,5 @@
 from ntpath import join
-from classes_my import AddressBook, Record, Phone, Birthday
+from classes import AddressBook, Record, Phone, Birthday
 from os import name
 import sys
 from functions import error_handler, deserialize_users, serialize_users, parse, pretty_print, get_handler
@@ -33,10 +33,10 @@ def main():
 
     menu = '''Вы можете:
         1. добавить абонента в адресную книгу
-        2. изменить поля в адресной книге для существующего абонента
+        2. изменить данные существующего абонента
         3. удалить абонента из адресной книги
-        4. искать абонента в адресной книге по любым полям и вхождениям в них
-        5. искать абонента в адресной книге по диапазону дат дней рождений
+        4. искать абонента по любым неполным данным 
+        5. искать абонента с днем рождения в диапазоне дат
         6. просмотреть все записи в адресной книге 
         7. завершить работу 
               (P.S. или напишите мне простым языком - чего Вы хотите. Постараюсь понять)
