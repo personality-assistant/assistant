@@ -1,3 +1,4 @@
+
 from collections import UserDict
 from datetime import datetime, date, timedelta
 from faker import Faker
@@ -7,7 +8,6 @@ import re
 class Note(UserDict):
     """
     FOR JUST IN CASE
-
     def __init__(self, data=None):
         super(Note, self).__init__()
         self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
@@ -18,7 +18,7 @@ class Note(UserDict):
 
     def __repr__(self):
         result = ''
-        log = f'Note has not been made yet.'
+        log = f'Заметка не создана.'
         for k, v in self.items():
             result += f'{k} - {v}\n'
         result = result if result else log
@@ -43,7 +43,7 @@ class Email:
     @email.setter
     def email(self, email):
         regex = r'\b[a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]*\.[a-zA-Z]{2,}\b'
-        log = 'Invalid email.'
+        log = 'email имеет ошибочный формат'
         raw_email = re.search(regex, email)
         if raw_email != None:
             email = raw_email.group()
@@ -66,7 +66,6 @@ class Phone:
         # два объекта равны если равны строковые значения сохраненных телефонов
         if isinstance(ob, Phone):
             return self.phone == ob.phone
-        # можно сравнить строку и объект. Если строка совпадает с полем phone
         if isinstance(ob, str):
             return self.phone == ob
 
@@ -127,7 +126,11 @@ class Record:
             self.address = address
             return self.address
         else:
-            raise TypeError('You have to enter address in str format only.')
+            raise TypeError('Адрес должен иметь строковый формат данных.')
+
+    def change_name(self, name):
+        self.name = name
+        return self
 
     def add_phone(self, phone):
         # добавляет номер телефона в существующую запись. Если такой номер есть - генерирует исключение
@@ -140,17 +143,23 @@ class Record:
 
     def add_email(self, email):
         email = Email(email)
-        if email not in self.emails and email != 'Invalid email.':
+        if email not in self.emails and email != 'email имеет ошибочный формат':
             self.emails.append(email)
         else:
-            raise ValueError('Entered email is already in contact data.')
+            raise ValueError(
+                'Введенный адрес электронной почты уже есть в контактных данных.')
 
     def del_email(self, email):
         email = Email(email)
         if email in self.emails:
             self.emails.remove(email)
         else:
-            raise ValueError('Cannot delete non existent email.')
+            raise ValueError(
+                'Невозможно удалить несуществующий адрес электронной почты.')
+
+    def change_email(self, old_email, new_email):
+        self.del_email(self, old_email)
+        self.add_email(self, new_email)
 
     def add_note(self, note):
         self.note[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = note
@@ -164,10 +173,10 @@ class Record:
             raise ValueError(
                 'операция удаления: такого телефона нет в данной записи')
 
-    def change_phone(self, old_phone, nev_phone):
+    def change_phone(self, old_phone, new_phone):
         # замена номера телефона - удаление старого и добавление нового
         self.del_phone(old_phone)
-        self.add_phone(nev_phone)
+        self.add_phone(new_phone)
 
     def days_tobirthday(self):
         if self.birthday:
@@ -179,30 +188,67 @@ class Record:
     def __repr__(self):
         # форматирует и выводит одну запись в читаемом виде одной или нескольких строк
         # (если запись содержит несколько телефонов)
+        output_str = '_' * 80 + '\n' + \
+            f"|{'имя':^25}|{'дата':^10}|{'телефоны':^16}|{'e-mails':^24}|\n" + \
+            '_' * 80 + '\n'
 
-        # вариант Ярослава. Без этих "SP"  у него не работает вывод. То есть не будет работать создание таблицы
-        # st = f"{self.name} SP {self.birthday.__repr__()} SP {self.phones.__repr__()}\n"
-        st = f"| {self.name:.<40}| {self.birthday.__repr__(): <11} | {self.phones[0].__repr__() if self.phones else '': <20} |\n|{self.email:<30}|{self.address:<40}|\n|{self.note:<120}|\n"
-        if len(self.phones) > 1:
-            for elem in self.phones[1:]:
-                st += f" |                                         |             | {elem.__repr__(): <20} |n"
+        str_num = max(len(self.name.split()), len(
+            self.phones), len(self.emails))
+        name_list = []
+        phones_list = []
+        emails_list = []
+        birthday_list = []
+        for i in range(str_num):
+            if i == 0:
+                birthday_list.append(self.birthday.__repr__())
+            else:
+                birthday_list.append('')
+            if len(self.name.split()) > i:
+                name_list.append(self.name.split()[i])
+            else:
+                name_list.append('')
 
-        return st
+            if len(self.phones) > i:
+                phones_list.append(self.phones[i].__repr__())
+            else:
+                phones_list.append('')
+
+            if len(self.emails) > i:
+                emails_list.append(self.emails[i])
+            else:
+                emails_list.append('')
+            output_str += f"|{name_list[i]:^25}|{birthday_list[i]:^10}|{phones_list[i]:>16}|{emails_list[i]!r:>24}|\n"
+        output_str += '_' * 80 + '\n'
+        output_str += f"| {'Адрес:':<7}|\n"
+        count = 0
+        if self.address:
+            for i in range(round(len(self.address) / 74 + 0.5)):
+                output_str += f"|    {self.address[count:count + 74]:<74}|\n"
+                count += 74
+        else:
+            output_str += f"|    {'поле не заполнено':^78}|\n"
+        output_str += '_' * 80 + '\n'
+        output_str += f"| {'Заметки:':<77}|\n"
+        for key, value in self.note.items():
+            count = 0
+            elem = key + ' ' + value
+            for i in range(round(len(elem) / 74 + 0.5)):
+                output_str += f"|    {elem[count:count + 74].__repr__():<74}|\n"
+                count += 74
+        output_str += '_' * 80 + '\n'
+        # print(output_str)
+        return output_str
         """
         name = 'Boris'
         birthday = '03.06.1978'
         phones = ['7987979', '0080800', '098080980']
         emails = ['sdsd@kjhkj.uh', 'jhgh@jhk.jh', 'jgjhgjh@kjh.uy', 'hgjhgj@jhgj.gkj', 'jhjhg@gfg.hg']
-
         ph = 'CONTACT\'S PHONES'
         em = 'CONTACT\'S EMAILS'
-
         st = f" {line * 81:} \n"
         st += f"|{name:.^81}|\n"
         st += f"|{birthday:.^81}|\n"
-
         st += f"|{ph:.^40}|{em:.^40}|\n"
-
         biggest = len(phones) if len(phones) > len(emails) else len(emails)
         for i in range(biggest):
             phone = ''.join(phones[:1]) if phones else ''
@@ -213,7 +259,6 @@ class Record:
             st += f"|{phone:.^40}|{email:.^40}|\n"
                         
         print(st)
-
         ВЫВОД БУДЕТ СЛЕДУЮЩИМ
          _________________________________________________________________________________ 
         |......................................Boris......................................|
@@ -224,7 +269,6 @@ class Record:
         |...............098080980................|.............jgjhgjh@kjh.uy.............|
         |........................................|............hgjhgj@jhgj.gkj.............|
         |........................................|..............jhjhg@gfg.hg..............|
-
         """
 
     def add_birthday(self, birthday):
@@ -237,7 +281,7 @@ class Record:
         # date_stop=False, то сравнение проходит не по интервалу дат, а по\
         # одной дате date. Если year=False - то при сравнении год не \
         # учитывается, иначе год участвует в сравнении
-        if not self.birthday.birthday:
+        if not self.birthday:
             # если дата рождения не записана - возвращаем None
             return None
 
@@ -260,14 +304,27 @@ class Record:
         return False
 
     def search(self, pattern):
-        # просматривает текстовые поля записи (name, phone). Если встречает \
+        # просматривает текстовые поля записи (name, phones, note, address, emails). Если встречает \
         # сответствие паттерну - возвращает экземпляр записи. Иначе возвращает\
         # False
         if pattern.casefold() in self.name.casefold():
             return self
-        for phone in self.phones:
-            if pattern.casefold() in phone.phone.casefold():
+        if self.address:
+            if pattern.casefold() in self.address.casefold():
                 return self
+        if self.note:
+            for value in self.note.values():
+                if pattern.casefold() in value:
+                    return self
+        if self.phones:
+            for phone in self.phones:
+                if pattern.casefold() in phone.phone.casefold():
+                    return self
+        if self.emails:
+            for email in self.emails:
+                if pattern.casefold() in email.email.casefold():
+                    return self
+
         return False
 
 
@@ -311,7 +368,7 @@ class AddressBook(UserDict):
         # удаляет запись с ключем name (строка)
         # из существующей адресной книги. Если такого имени нет - генерирует исключение
         if name in self:
-            self.pop(name)
+            return self.pop(name)
         else:
             raise KeyError('записи с таким именем нет в адресной книге')
 
