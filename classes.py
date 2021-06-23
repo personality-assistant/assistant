@@ -83,7 +83,10 @@ class Phone:
                 'Телефон при вводе может содержать от 9 до 12 цифр и символы: пробел +-()xX.[]_')
 
     def __repr__(self):
-        return self.phone
+        x = self.phone
+        s = f'+{x[:2]}({x[2:4]})-{x[4:7]}-{x[7:]}'
+
+        return s
 
 
 class Birthday:
