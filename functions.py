@@ -1,7 +1,7 @@
 import pickle
 from prettytable import PrettyTable
 from termcolor2 import colored
-from classes_my import AddressBook, Record, Phone, Birthday
+from classes import AddressBook, Record, Phone, Birthday
 import nltk
 import re
 import pymorphy2
