@@ -1,3 +1,20 @@
+Metadata-Version: 2.1
+Name: assistant
+Version: 0.0.7
+Summary: Your personal pretty looking assistant.
+Home-page: https://github.com/personality-assistant/assistant
+Author: UlkaBo KonstZiv Adashian Romanskyy
+Author-email: ul.bozhko@gmail.com
+License: UNKNOWN
+Project-URL: Bug Tracker, https://github.com/personality-assistant/assistant/issues
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
 ## About \<assistant\>
 
 Thank you for chosing our **assistant** which could be a way to save your time and hold all info about friends, family and other people in one place easy to use.
@@ -43,3 +60,5 @@ You will see following:
     (P.P.S. если Ваши желания будут выражены простыми предложениями - мне будет легче понять)
 
 Just choose you needs and pleasant use.
+
+

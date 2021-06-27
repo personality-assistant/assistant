@@ -1,7 +1,12 @@
 import pickle
 from prettytable import PrettyTable
 from termcolor2 import colored
-from classes import AddressBook, Record, Phone, Birthday
+
+try:
+    from classes import *
+except:
+    from .classes import *
+
 import nltk
 import re
 import pymorphy2
@@ -359,6 +364,7 @@ def get_handler(res_pars, addressbook):
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
     def change_name(record):
+
         if isinstance(record, Record):
             name = enter_new_correct_name(addressbook)
             # если имя передумали вводить  то прерываемся, ничего не делаем , выходим в меню
