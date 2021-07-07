@@ -24,54 +24,6 @@ path_file = Path(path) / name_file
 len_str = 108+19
 
 
-def pretty_print(text, color='green'):
-
-    if isinstance(text, str):
-        text = [el.ljust(len_str) for el in text.split('\n')]
-        text = '\n'.join(text)
-        print(colored(text, color='green', attrs=['bold']))
-        print(colored('৹' * len_str, color='green'))
-    elif isinstance(text, (Record, AddressBook)):
-        pretty_table(text, color='yellow', attrs=['reverse'])
-    else:
-        print(colored(str(text), color='red', attrs=['bold', 'blink']))
-
-
-def pretty_input(text):
-
-    print(colored(text, color='blue'))
-    user_input = input('>>> ')
-    print(colored('৹' * len_str, color='green'))
-    return user_input
-
-
-def pretty_table(addressbook, N=10, color='yellow'):
-    # выводит на экран всю адресную книгу блоками по N записей. Основная обработка
-    # реализована как метод класса addressbook, что позволяет использовать аналогичный
-    # вывод для результатов поиска по запросам, так как функции поиска возвращают
-    # объект типа addressbook с результатами
-    n = int(N)
-    if isinstance(addressbook, AddressBook):
-        pretty_print(f'всего к выводу {len(addressbook)} записей: ')
-        for block in addressbook.out_iterator(n):
-            print(pretty(block))
-            if len(block) == n:
-                usr_choice = input(colored(
-                    'Нажмите "Enter", или введите "q", что бы закончить просмотр.\n', 'yellow'))
-                if usr_choice:
-                    """Если пользователь вводит любой символ, его перебрасывает на основное меню."""
-                    break
-            continue
-        return colored('Вывод окончен!', color)
-
-    if isinstance(addressbook, Record):
-        record = addressbook
-        x = AddressBook()
-        x[record.name] = record
-        print(pretty(x))
-    # print('объект не является ни записью ни адресной книгой')
-
-
 def pretty(block):
     '''
         Данная функция создана исключительно для обработки функции show_all,
@@ -90,12 +42,12 @@ def pretty(block):
         block = AddressBook()
         block[record.name] = record
     table = PrettyTable([], vertical_char="ஃ",
-                        horizontal_char="৹", junction_char="ஃ")
+                        horizontal_char="∘", junction_char="ஃ")
     titles = ('имя'.center(20), 'дата рождения'.center(15), 'телефоны'.center(
         18), 'email'.center(20), 'адрес'.center(20), 'заметки'.center(15))
     table.field_names = titles
     table.align = 'l'
-    #table.align['заметки'.center(15)] = 'l'
+    # table.align['заметки'.center(15)] = 'l'
 
     for name, record in block.items():
         name = name.split()
@@ -122,6 +74,56 @@ def pretty(block):
     return colored(table, 'yellow')
 
 
+def pretty_input(text):
+
+    print(colored(text, color='blue'))
+    user_input = input('>>> ')
+    print(colored('৹' * len_str, color='green'))
+    return user_input
+
+
+def pretty_print(text, color='green'):
+
+    if isinstance(text, str):
+        text = [el.ljust(len_str) for el in text.split('\n')]
+        text = '\n'.join(text)
+        print(colored(text, color='green', attrs=['bold']))
+        print(colored('৹' * len_str, color='green'))
+    elif isinstance(text, (Record, AddressBook)):
+        pretty_table(text, color='yellow', attrs=['reverse'])
+    else:
+        print(colored(str(text), color='red', attrs=['bold', 'blink']))
+
+
+def pretty_table(addressbook, N=10, color='yellow', attr=[]):
+    # выводит на экран всю адресную книгу блоками по N записей. Основная обработка
+    # реализована как метод класса addressbook, что позволяет использовать аналогичный
+    # вывод для результатов поиска по запросам, так как функции поиска возвращают
+    # объект типа addressbook с результатами
+    n = int(N)
+    if isinstance(addressbook, AddressBook):
+        pretty_print(f'всего к выводу {len(addressbook)} записей: ')
+        for block in addressbook.out_iterator(n):
+            print(pretty(block))
+            if len(block) == n:
+                usr_choice = input(colored(
+                    'Нажмите "Enter", или введите "q", что бы закончить просмотр.\n', 'yellow'))
+                if usr_choice:
+                    """Если пользователь вводит любой символ, его перебрасывает на основное меню."""
+                    break
+            continue
+        return colored('Вывод окончен!', color)
+
+    if isinstance(addressbook, Record):
+        record = addressbook
+        x = AddressBook()
+        x[record.name] = record
+        print(pretty(x))
+    # print('объект не является ни записью ни адресной книгой')
+
+
+# -----------------серелизация-и-десерелизация----------------------
+
 def deserialize_users(path):
     """using the path "path" reads the file with contacts"""
 
@@ -136,6 +138,8 @@ def serialize_users(addressbook, path):
 
     with open(path, "wb") as fh:
         pickle.dump(addressbook, fh)
+
+# -----------------конец-блока-серелизация-и-десерелизация-----------
 
 
 def error_handler(func):
@@ -158,99 +162,14 @@ def error_handler(func):
     return inner
 
 
-def parse(input_string):  # --> ('key word', parameter)
-    # извлекает команду и параметры из строки, возвращает в виде списка с
-    # одним элементом - кортеж из двух элементов: команды и параметры
-
-    def parse_phone(src):
-        # функция принимает строку в качестве аргумента и ищет в ней номер телефона (справа)
-        # Возвращает кортеж из двух аргументов - все, вплоть до номера телефона (без
-        # пробелов слева и справа) и номера телефона. Если номер телефона не найден,
-        # вместо него возвращается пустая строка.
-
-        import re
-        phone_regex = re.compile(r'[+]?[\d\-\(\)]{5,18}\s?$')
-        match = phone_regex.search(src)
-        if match is None:
-            result = (src.strip(), '')
-        else:
-            result = (src[:match.start()].strip(), match.group())
-        return result
-
-    def parse_word(word):
-        # фабричная функция. Производит функции синтаксического анализатора для
-        # отдельных команд. Возвращает кортеж из команды, строку после команды
-        # и номер телефона. Если номер телефона отсутствует, вместо него
-        # возвращается пустая строка.
-
-        l = len(word)
-
-        def result(src):
-            if src.casefold().startswith(word.casefold()):
-                return word, *parse_phone(src[l:].lstrip())
-
-        return result
-
-    parse_scoup = [
-        parse_word('hello'),
-        parse_word('add'),
-        # parse_word('change'),
-        parse_word('phone'),
-        parse_word('show all'),
-        parse_word('exit'),
-        parse_word('close'),
-        parse_word('good bye'),
-        parse_word('.'),
-        parse_word('help'),
-        parse_word('search'),
-        parse_word('other phone'),
-        parse_word('bd add')
-    ]
-    res_pars = [i(input_string) for i in parse_scoup if i(
-        input_string)] or [('unrecognize', '', '')]
-
-    return res_pars[0]
-
-
 @error_handler
 def get_handler(res_pars, addressbook):
     # получив результаты работы парсера функция управляет передачей параметров
     # и вызовм соотвествующего обработчика команды
 
-    def help_f(*args):
-        return '''формат команд:
-        - add - формат: add name phone_number - добавляет новый контакт
-        - other phone - формат: other phone name phone_number - добавляет дополнительный телефон в существующую запись
-        - show all - формат: show all [N] - показывает всю адресную книгу. N - необязательный параметр - количество одновременно выводимых записей
-        - exit/./close/goog bye - формат: exit - остановка работы с программой. Важно! чтобы сохранить все изменения и введенные данные - используйте эту команду
-        - phone - формат: phone name - поиск телефона по имени. Можно ввести неполной имя либо его часть - программа выведет все совпадения
-        - hello - формат: hello - просто Ваше привествие программе. Доброе слово - оно и для кода приятно)
-        - bd add - формат: bd add name dd-mm-YYYY - ввод либо перезапись ранее введенной даты рождения. Соблюдайте формат ввода даты.
-        - search - формат: search pattern - поиск совпадений по полям имени и телефонов. Будут выведены все записи в которых есть совпадения'''
+    # -----------функции-работы-с-адресбук------первое-меню------------------------------------------------
 
-    def hello_f(*args):
-        return 'Привет! Чем я могу Вам помочь?'
-
-    def exit_f(*args):
-        return 'bye'
-
-    def is_in(addressbook, name):
-        return name in addressbook
-
-    def enter_new_correct_name(addressbook):
-        name = pretty_input('Введите новое имя ')
-        while is_in(addressbook, name) or not name:
-            if not name:
-                name = pretty_input(
-                    'У человека должно быть имя. Введите имя. Передумали ? Enter -выход в предыдущее меню')
-            else:
-                name = pretty_input(
-                    'Введите другое имя. Такое имя уже есть (Enter -выход в предыдущее меню')
-            if not name:
-                return False
-        return name
-
-    def add_f(addressbook):
+    def add_record(addressbook):
         #  сначала создает запись с именем
         #  потом последовательно вызывает функции
         # для заполнения телефона, д/р, заметки, и т.д.
@@ -266,130 +185,60 @@ def get_handler(res_pars, addressbook):
         add_note(record)
         return f'в адресную книгу внесена запись: \n{pretty(record)}'
 
-    def search_record(adressbook):
-        pattern = pretty_input(
-            'введите имя записи или часть имени/значения поля, которое однозначно определяет запись: ')
-        res = addressbook.search(pattern)
-        while len(res) != 1:
-            pretty_print(f'найдено {len(res)} записей')
-            print(f'{pretty(res)}')
-            pattern = pretty_input(
-                'введите более точный запрос или порядковый номер абонента в этой таблице (1/2/...) ')
-            try:
-                number_choice = int(pattern) - 1
-                choice_name = list(res)[number_choice]
-                one_record = addressbook[choice_name]
-                res = AddressBook()
-                res[one_record.name] = one_record
+    @error_handler
+    def change_f(addressbook):
 
-            except:
-                res = addressbook.search(pattern)
+        record = search_record(addressbook)
+        pretty_table(record)
+        pretty_print(menu_change)
+        item_number = input('>>>  ')
+        return func_change[item_number](record)
 
-        name, record = list(res.items())[0]
-        pretty_print(f'найдена запись с именем {name}')
-        return record
+    @error_handler
+    def delete_f(addressbook):
+        name = pretty_input('Введите имя ')
+        result = addressbook.del_record(name)
+        return result
 
-    def change_name(record):
-        if isinstance(record, Record):
-            name = enter_new_correct_name(addressbook)
-            # если имя передумали вводить  то прерываемся, ничего не делаем , выходим в меню
+    def enter_new_correct_name(addressbook):
+        name = pretty_input('Введите новое имя ')
+        while is_in(addressbook, name) or not name:
             if not name:
-                return True
-            addressbook.del_record(record.name)
-            record.change_name(name)
-            addressbook.add_record(record)
-            return f'в записи изменено имя: \n{pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+                name = pretty_input(
+                    'У человека должно быть имя. Введите имя. Передумали ? Enter -выход в предыдущее меню')
+            else:
+                name = pretty_input(
+                    'Введите другое имя. Такое имя уже есть (Enter -выход в предыдущее меню')
+            if not name:
+                return False
+        return name
 
-    def add_note(record):
-        if isinstance(record, Record):
-            note_new = pretty_input(
-                'введите заметку. Дата и время будут добавлены автоматически: ')
-            record.add_note(note_new)
-            return f'в запись добавлена заметка: \n{pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+    def exit_f(*args):
+        return 'bye'
 
-    def add_eml(record):
-        if isinstance(record, Record):
-            email_new = pretty_input(
-                'введите e-mail: ')
-            record.add_email(email_new)
-            return f'в запись добавлен e-mail: \n{pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
+    def hello_f(*args):
+        return 'Привет! Чем я могу Вам помочь?'
 
-    def del_phone(record):
-        if isinstance(record, Record):
-            answer = 'н'
-            while answer != 'д':
-                number_old_phone = pretty_input(
-                    'Какой номер хотите удалить  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад  ')
-                if not number_old_phone:
-                    return True
-                if 0 < int(number_old_phone) <= len(record.phones):
-                    old_phone = record.phones[number_old_phone-1].phone
-                    answer = pretty_input(f'Этот номер {old_phone}?(д/н)')
-                else:
-                    answer = 'н'
-                    pretty_print('У абонента нет столько телефонов')
-            result = record.del_email(old_phone)
-            return f'У абонента удален номер: \ {pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+    def help_f(*args):
+        return '''формат команд:
+        - add - формат: add name phone_number - добавляет новый контакт
+        - other phone - формат: other phone name phone_number - добавляет дополнительный телефон в существующую запись
+        - show all - формат: show all [N] - показывает всю адресную книгу. N - необязательный параметр - количество одновременно выводимых записей
+        - exit/./close/goog bye - формат: exit - остановка работы с программой. Важно! чтобы сохранить все изменения и введенные данные - используйте эту команду
+        - phone - формат: phone name - поиск телефона по имени. Можно ввести неполной имя либо его часть - программа выведет все совпадения
+        - hello - формат: hello - просто Ваше привествие программе. Доброе слово - оно и для кода приятно)
+        - bd add - формат: bd add name dd-mm-YYYY - ввод либо перезапись ранее введенной даты рождения. Соблюдайте формат ввода даты.
+        - search - формат: search pattern - поиск совпадений по полям имени и телефонов. Будут выведены все записи в которых есть совпадения'''
 
-    def change_eml(record):
-        if isinstance(record, Record):
-            answer = 'н'
-            while answer != 'д':
-                number_old_email = pretty_input(
-                    'Какой email хотите поменять  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад ')
-                if not number_old_email:
-                    return True
-                if 0 < int(number_old_email) <= len(record.emails):
-                    old_email = record.emails[number_old_email-1].email
-                    answer = pretty_input(f'Этот номер {old_email}?(д/н)')
-                else:
-                    answer = 'н'
-                    pretty_print('У абонента нет столько email')
-            new_email = pretty_input('Введите новый email ')
-            result = record.change_email(old_email, new_email)
-            return f'У абонента изменен email: \n{pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+    def search(addressbook):
+        user_input = pretty_input('Что Вы хотите найти? введите паттерн: ')
+        # осуществляет поиск введенной строки во всех текстовых полях адресной книги
+        result = addressbook.search(user_input)
 
-    def del_eml(record):
-        if isinstance(record, Record):
-            answer = 'н'
-            while answer != 'д':
-                number_old_email = pretty_input(
-                    'Какой email хотите удалить  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад  ')
-                if not number_old_email:
-                    return True
-                if 0 < int(number_old_email) <= len(record.emails):
-                    old_email = record.emails[number_old_email-1].email
-                    answer = pretty_input(f'Этот номер {old_email}?(д/н)')
-                else:
-                    answer = 'н'
-                    pretty_print('У абонента нет столько email')
-            result = record.del_email(old_email)
-            return f'У абонента удален email: \ {pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+        if not result:
+            raise Exception('По данному запросу ничего не найдено')
 
-    def change_adr(record):
-        if isinstance(record, Record):
-            # address_old = record.address.__repr__() if record.address else 'пока не задан'
-            # pretty_print(f'текущий адрес:  {address_old}')
-            address_new = pretty_input('введите адрес ("ввод" - пропустить): ')
-            record.add_address(address_new)
-            return f'в запись добавлен адрес: \n{pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
-
-    def change_bd(record):
-        if isinstance(record, Record):
-            # birthday_old = record.birthday.__repr__() if record.birthday else 'пока не задан'
-            # pretty_print(f'текущий день рождения:  {birthday_old}')
-            birthday_str = pretty_input(
-                'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
-            record.add_birthday(birthday_str)
-            return f'в запись добавлен день рождения: \n{pretty(record)}'
-        return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
+        return pretty_table(result, N=10)
 
     @error_handler
     def search_bd(addressbook):
@@ -414,12 +263,117 @@ def get_handler(res_pars, addressbook):
             result = addressbook.search_birthday(data_start)
         return pretty_table(result, N=10)
 
+    def search_record(adressbook):
+        pattern = pretty_input(
+            'введите имя записи или часть имени/значения поля, которое однозначно определяет запись: ')
+        res = addressbook.search(pattern)
+        while len(res) != 1:
+            pretty_print(f'найдено {len(res)} записей')
+            print(f'{pretty(res)}')
+            pattern = pretty_input(
+                'введите более точный запрос или порядковый номер абонента в этой таблице (1/2/...) ')
+            try:
+                number_choice = int(pattern) - 1
+                choice_name = list(res)[number_choice]
+                one_record = addressbook[choice_name]
+                res = AddressBook()
+                res[one_record.name] = one_record
+
+            except:
+                res = addressbook.search(pattern)
+
+        name, record = list(res.items())[0]
+        pretty_print(f'найдена запись с именем {name}')
+        return record
+
+    def show_all_f(addressbook, N=10):
+        return pretty_table(addressbook, N)
+
+    # -----------закончились-функции-работы-с-адресбук--------первое-меню---------------------------------
+
+    # -----------функции-работы-с-записью------------второе-меню------------------------------------------
+
+    def add_eml(record):
+        if isinstance(record, Record):
+            email_new = pretty_input(
+                'введите e-mail: ')
+            if not email_new:
+                return 'email не введен'
+            record.add_email(email_new)
+            return f'в запись добавлен e-mail: \n{pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
+
+    def add_note(record):
+        if isinstance(record, Record):
+            note_new = pretty_input(
+                'введите заметку. Дата и время будут добавлены автоматически: ')
+            if not note_new:
+                return 'заметка  не введена'
+            record.add_note(note_new)
+            return f'в запись добавлена заметка: \n{pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+
     def add_phone(record):
         if isinstance(record, Record):
             # позволяет добавить в запись дополнительный телефон
             phone = pretty_input('Введите номер телефона: ')
+            if not phone:
+                return 'телефон не введен'
             record.add_phone(phone)
             return f'в запись добавлен новый телефон: \n{pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+
+    def change_adr(record):
+        if isinstance(record, Record):
+            # address_old = record.address.__repr__() if record.address else 'пока не задан'
+            # pretty_print(f'текущий адрес:  {address_old}')
+            address_new = pretty_input('введите адрес ("ввод" - пропустить): ')
+            record.add_address(address_new)
+            return f'в запись добавлен адрес: \n{pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
+
+    def change_bd(record):
+        if isinstance(record, Record):
+            # birthday_old = record.birthday.__repr__() if record.birthday else 'пока не задан'
+            # pretty_print(f'текущий день рождения:  {birthday_old}')
+            birthday_str = pretty_input(
+                'введите день рождения в формате дд-мм-гггг ("ввод" - пропустить): ')
+            if not birthday_str:
+                return True
+            record.add_birthday(birthday_str)
+            return f'в запись добавлен день рождения: \n{pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соотвекстует более одной записи'
+
+    def change_eml(record):
+        if isinstance(record, Record):
+            answer = 'н'
+            while answer != 'д':
+                number_old_email = pretty_input(
+                    'Какой email хотите поменять  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад ')
+                if not number_old_email:
+                    return True
+                if 0 < int(number_old_email) <= len(record.emails):
+                    old_email = record.emails[number_old_email-1].email
+                    answer = pretty_input(f'Этот номер {old_email}?(д/н)')
+                else:
+                    answer = 'н'
+                    pretty_print('У абонента нет столько email')
+            new_email = pretty_input('Введите новый email ')
+            result = record.change_email(old_email, new_email)
+            return f'У абонента изменен email: \n{pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
+
+    def change_name(record):
+
+        if isinstance(record, Record):
+            name = enter_new_correct_name(addressbook)
+            # если имя передумали вводить  то прерываемся, ничего не делаем , выходим в меню
+            if not name:
+                return True
+            addressbook.del_record(record.name)
+            record.change_name(name)
+            addressbook.add_record(record)
+            return f'в записи изменено имя: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
     def change_phone(record):
@@ -441,33 +395,46 @@ def get_handler(res_pars, addressbook):
             return f'в запись добавлен новый телефон: \n{pretty(record)}'
         return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-    @error_handler
-    def change_f(addressbook):
+    def del_eml(record):
+        if isinstance(record, Record):
+            answer = 'н'
+            while answer != 'д':
+                number_old_email = pretty_input(
+                    'Какой email хотите удалить  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад  ')
+                if not number_old_email:
+                    return True
+                if 0 < int(number_old_email) <= len(record.emails):
+                    old_email = record.emails[number_old_email-1].email
+                    answer = pretty_input(f'Этот номер {old_email}?(д/н)')
+                else:
+                    answer = 'н'
+                    pretty_print('У абонента нет столько email')
+            result = record.del_email(old_email)
+            return f'У абонента удален email: \ {pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-        record = search_record(addressbook)
-        pretty_table(record)
-        pretty_print(menu_change)
-        item_number = input('>>>  ')
-        return func_change[item_number](record)
+    def del_phone(record):
+        if isinstance(record, Record):
+            answer = 'н'
+            while answer != 'д':
+                number_old_phone = pretty_input(
+                    'Какой номер хотите удалить  ? введите его порядковый номер (1/2/3..) или Enter чтобы вернуться назад  ')
+                if not number_old_phone:
+                    return True
+                if 0 < int(number_old_phone) <= len(record.phones):
+                    old_phone = record.phones[number_old_phone-1].phone
+                    answer = pretty_input(f'Этот номер {old_phone}?(д/н)')
+                else:
+                    answer = 'н'
+                    pretty_print('У абонента нет столько телефонов')
+            result = record.del_email(old_phone)
+            return f'У абонента удален номер: \ {pretty(record)}'
+        return 'такой записи не существует или поисковом шаблону соответствует более одной записи'
 
-    def search(addressbook):
-        user_input = pretty_input('Что Вы хотите найти? введите паттерн: ')
-        # осуществляет поиск введенной строки во всех текстовых полях адресной книги
-        result = addressbook.search(user_input)
+    def is_in(addressbook, name):
+        return name in addressbook
 
-        if not result:
-            raise Exception('По данному запросу ничего не найдено')
-
-        return pretty_table(result, N=10)
-
-    @error_handler
-    def delete_f(addressbook):
-        name = pretty_input('Введите имя ')
-        result = addressbook.del_record(name)
-        return result
-
-    def show_all_f(addressbook, N=10):
-        return pretty_table(addressbook, N)
+    # -----------закончились-функции-работы-с-записью------------второе-меню------------------------------------
 
     def unrecognize_f(res_pars, addressbook):
         print(f'вызвана функция unrecognize. Строка:  {res_pars}')
@@ -665,7 +632,7 @@ def get_handler(res_pars, addressbook):
                                 4. выход
                         ''')
                 if chois == '1':
-                    return add_f(address_book)
+                    return add_record(address_book)
                 elif chois == '2':
                     return True
             elif ('add' in predictors_dict['commands']) and predictors_dict['name'] and (not predictors_dict['objects'] or ('record' in predictors_dict['objects'])) and not predictors_dict['phones'] and not predictors_dict['emails']:
@@ -815,7 +782,7 @@ def get_handler(res_pars, addressbook):
                    '9': add_note,
                    }
     HANDLING = {
-        '1': add_f,
+        '1': add_record,
         '2': change_f,
         '3': delete_f,
         '4': search,
@@ -827,7 +794,7 @@ def get_handler(res_pars, addressbook):
         '.': exit_f,
         'good bye': exit_f,
         'close': exit_f,
-        'add': add_f,
+        'add': add_record,
         'show all': show_all_f,
         'phone': search,
         'search': search,
@@ -840,3 +807,57 @@ def get_handler(res_pars, addressbook):
     }
 
     return HANDLING.get(res_pars)(addressbook) if HANDLING.get(res_pars) else unrecognize_f(res_pars, addressbook)
+
+
+def parse(input_string):  # --> ('key word', parameter)
+    # извлекает команду и параметры из строки, возвращает в виде списка с
+    # одним элементом - кортеж из двух элементов: команды и параметры
+
+    def parse_phone(src):
+        # функция принимает строку в качестве аргумента и ищет в ней номер телефона (справа)
+        # Возвращает кортеж из двух аргументов - все, вплоть до номера телефона (без
+        # пробелов слева и справа) и номера телефона. Если номер телефона не найден,
+        # вместо него возвращается пустая строка.
+
+        import re
+        phone_regex = re.compile(r'[+]?[\d\-\(\)]{5,18}\s?$')
+        match = phone_regex.search(src)
+        if match is None:
+            result = (src.strip(), '')
+        else:
+            result = (src[:match.start()].strip(), match.group())
+        return result
+
+    def parse_word(word):
+        # фабричная функция. Производит функции синтаксического анализатора для
+        # отдельных команд. Возвращает кортеж из команды, строку после команды
+        # и номер телефона. Если номер телефона отсутствует, вместо него
+        # возвращается пустая строка.
+
+        l = len(word)
+
+        def result(src):
+            if src.casefold().startswith(word.casefold()):
+                return word, *parse_phone(src[l:].lstrip())
+
+        return result
+
+    parse_scoup = [
+        parse_word('hello'),
+        parse_word('add'),
+        # parse_word('change'),
+        parse_word('phone'),
+        parse_word('show all'),
+        parse_word('exit'),
+        parse_word('close'),
+        parse_word('good bye'),
+        parse_word('.'),
+        parse_word('help'),
+        parse_word('search'),
+        parse_word('other phone'),
+        parse_word('bd add')
+    ]
+    res_pars = [i(input_string) for i in parse_scoup if i(
+        input_string)] or [('unrecognize', '', '')]
+
+    return res_pars[0]
