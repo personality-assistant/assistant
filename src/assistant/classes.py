@@ -76,11 +76,11 @@ class Phone:
     @phone.setter
     def phone(self, phone):
         num = phone.translate(str.maketrans('', '', '+() -_'))
-        if num.isdigit() and (9 <= len(num) <= 12):
+        if num.isdigit() and (5 <= len(num) <= 20):
             self.__phone = num
         else:
             raise ValueError(
-                'Телефон при вводе может содержать от 9 до 12 цифр и символы: пробел +-()xX.[]_')
+                'Телефон при вводе может содержать от 5 до 20 цифр и символы: пробел +-()xX.[]_')
 
     def __repr__(self):
         x = self.phone
