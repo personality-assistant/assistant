@@ -1,4 +1,5 @@
 
+from abc import abstractmethod, ABCMeta
 from collections import UserDict
 from datetime import datetime, date, timedelta
 from faker import Faker
@@ -16,13 +17,13 @@ class Note(UserDict):
     def add_note(self, data):
         self[datetime.now().strftime('%Y-%m-%d %H:%M:%S')] = data
 
-    def __repr__(self):
-        result = ''
-        log = f'Заметка не создана.'
-        for k, v in self.items():
-            result += f'{k} - {v}\n'
-        result = result if result else log
-        return result
+    # def __repr__(self):
+    #    result = ''
+    #    log = f'Заметка не создана.'
+    #    for k, v in self.items():
+    #        result += f'{k} - {v}\n'
+    #    result = result if result else log
+    #    return result
 
 
 class Email:
@@ -51,8 +52,8 @@ class Email:
         else:
             raise ValueError(log)
 
-    def __repr__(self):
-        return self.email
+    # def __repr__(self):
+    #    return self.email
 
 
 class Phone:
@@ -82,11 +83,10 @@ class Phone:
             raise ValueError(
                 'Телефон при вводе может содержать от 5 до 20 цифр и символы: пробел +-()xX.[]_')
 
-    def __repr__(self):
-        x = self.phone
-        s = f'+{x[:2]}({x[2:4]})-{x[4:7]}-{x[7:]}'
-
-        return s
+    # def __repr__(self):
+    #    x = self.phone
+    #    s = f'+{x[:2]}({x[2:4]})-{x[4:7]}-{x[7:]}'
+    #    return s
 
 
 class Birthday:
@@ -109,8 +109,8 @@ class Birthday:
         else:
             raise TypeError('поле Birthday.birthday должно быть типа datetime')
 
-    def __repr__(self):
-        return self.birthday.strftime('%d-%m-%Y')
+    # def __repr__(self):
+    #    return self.birthday.strftime('%d-%m-%Y')
 
 
 class Record:
@@ -188,6 +188,7 @@ class Record:
             return (self.birthday.replace(year=date.today().year) - date.today()).days
         return f'Не введена дата родения для {self.name.value}'
 
+    '''
     def __repr__(self):
         # форматирует и выводит одну запись в читаемом виде одной или нескольких строк
         # (если запись содержит несколько телефонов)
@@ -241,11 +242,14 @@ class Record:
         output_str += '_' * 80 + '\n'
         # print(output_str)
         return output_str
-        """
+    '''
+
+    """
         name = 'Boris'
         birthday = '03.06.1978'
         phones = ['7987979', '0080800', '098080980']
-        emails = ['sdsd@kjhkj.uh', 'jhgh@jhk.jh', 'jgjhgjh@kjh.uy', 'hgjhgj@jhgj.gkj', 'jhjhg@gfg.hg']
+        emails = ['sdsd@kjhkj.uh', 'jhgh@jhk.jh',
+            'jgjhgjh@kjh.uy', 'hgjhgj@jhgj.gkj', 'jhjhg@gfg.hg']
         ph = 'CONTACT\'S PHONES'
         em = 'CONTACT\'S EMAILS'
         st = f" {line * 81:} \n"
@@ -258,12 +262,12 @@ class Record:
             email = ''.join(emails[:1]) if emails else ''
             phones = phones[1:]
             emails = emails[1:]
-            
+
             st += f"|{phone:.^40}|{email:.^40}|\n"
-                        
+
         print(st)
         ВЫВОД БУДЕТ СЛЕДУЮЩИМ
-         _________________________________________________________________________________ 
+         _________________________________________________________________________________
         |......................................Boris......................................|
         |...................................03.06.1978....................................|
         |............CONTACT'S PHONES............|............CONTACT'S EMAILS............|
@@ -335,7 +339,7 @@ class AddressBook(UserDict):
 
     def out_iterator(self, n):
         '''
-        метод возвращает на каждой итерации объект класса AddressBook, 
+        метод возвращает на каждой итерации объект класса AddressBook,
         содержащий n записей из вызывающего метод объекта AddressBook,
         на последнем шаге (исчерпание записей вызывающего объекта) выводятся
         оставшиеся записи
@@ -397,11 +401,11 @@ class AddressBook(UserDict):
                 result.add_record(res_rec)
         return result
 
-    def __repr__(self) -> str:
-        res = ''
-        for elem in self.values():
-            res += elem.__repr__()
-        return res
+    # def __repr__(self) -> str:
+    #    res = ''
+    #    for elem in self.values():
+    #        res += elem.__repr__()
+    #    return res
 
     def add_fake_records(self, n):
         fake = Faker(['uk_UA', 'ru_RU'])
@@ -413,6 +417,135 @@ class AddressBook(UserDict):
             record = Record(name, date_of_birth).add_phone(phone)
             self.add_record(record)
             print(f'Добавлена запись: {name}  {date_of_birth}  {phone}')
+
+
+class Viwer(metaclass=ABCMeta):
+    @abstractmethod
+    def view(self) -> str:
+        pass
+
+
+class NameViwer(Viwer):
+    def __init__(self, record: Record) -> None:
+        self.data = record.name
+
+    def viwe(self) -> str:
+        return str(self.data)
+
+
+class NoteViwer(Viwer):
+    def __init__(self, note: Note):
+        self.data = note
+
+    def viwe(self) -> str:
+        result = ''
+        log = f'Заметка не создана.'
+        for k, v in self.data.items():
+            result += f'{k} - {v}\n'
+        result = result if result else log
+        return result
+
+
+class AddressViwer(Viwer):
+    def __init__(self, record: Record):
+        self.data = record.address
+
+    def viwe(self) -> str:
+        return self.data
+
+
+class EmailViwer(Viwer):
+    def __init__(self, email: Email):
+        self.data = email
+
+    def viwe(self) -> str:
+        return self.data.email
+
+
+class PhoneViwer(Viwer):
+    def __init__(self, phone: Phone):
+        self.data = phone
+
+    def view(self) -> str:
+        return self.data.phone
+
+
+class BirthdayViwer(Viwer):
+    def __init__(self, birthday: Birthday):
+        self.data = birthday
+
+    def viwe(self) -> str:
+        return self.data.birthday.strftime('%d-%m-%Y')
+
+
+class RecordViwer(Viwer):
+    def __init__(self, record: Record):
+        self.data = record
+
+    def view(self) -> str:
+        output_str = '_' * 80 + '\n' + \
+            f"|{'имя':^25}|{'дата':^10}|{'телефоны':^16}|{'e-mails':^24}|\n" + \
+            '_' * 80 + '\n'
+
+        str_num = max(len(self.data.name.split()), len(
+            self.data.phones), len(self.data.emails))
+        name_list = []
+        phones_list = []
+        emails_list = []
+        birthday_list = []
+        for i in range(str_num):
+            if i == 0:
+                birthday_list.append(BirthdayViwer(self.data.birthday).viwe())
+            else:
+                birthday_list.append('')
+            if len(self.data.name.split()) > i:
+                name_list.append(NameViwer(self).split()[i])
+            else:
+                name_list.append('')
+
+            if len(self.phones) > i:
+                phones_list.append(PhoneViwer(self.phones[i]))
+            else:
+                phones_list.append('')
+
+            if len(self.emails) > i:
+                emails_list.append(EmailViwer(self.emails[i]))
+            else:
+                emails_list.append('')
+            output_str += f"|{name_list[i]:^25}|{birthday_list[i]:^10}|{phones_list[i]:>16}|{emails_list[i]!r:>24}|\n"
+        output_str += '_' * 80 + '\n'
+        output_str += f"| {'Адрес:':<7}|\n"
+        count = 0
+        if self.address:
+            for i in range(round(len(self.address) / 74 + 0.5)):
+                output_str += f"|    {AddressViwer(self)[count:count + 74]:<74}|\n"
+                count += 74
+        else:
+            output_str += f"|    {'поле не заполнено':^78}|\n"
+        output_str += '_' * 80 + '\n'
+        output_str += f"| {'Заметки:':<77}|\n"
+        for key, value in self.note.items():
+            count = 0
+            elem = key + ' ' + value
+            for i in range(round(len(elem) / 74 + 0.5)):
+                output_str += f"|    {elem[count:count + 74]:<74}|\n"
+                count += 74
+        output_str += '_' * 80 + '\n'
+        # print(output_str)
+        return output_str
+
+
+class AddressBookViwer(Viwer):
+    def __init__(self, addressbook: AddressBook):
+        self.data = addressbook
+
+    def viwe(self) -> str:
+
+        res = ''
+        for elem in self.data.values():
+            res += RecordViwer(elem)
+
+        return res
 
 
 if __name__ == '__main__':
