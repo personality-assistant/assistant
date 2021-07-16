@@ -20,6 +20,8 @@ import re
 from pathlib import Path
 from faker import Faker
 
+nltk.download('punkt')
+nltk.download('stopwords')
 
 # директория может быть выбрана при запуске программы, имя файла - константа.
 CONTACTS_FILE = 'contacts.dat'
